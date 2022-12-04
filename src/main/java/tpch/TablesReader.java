@@ -47,4 +47,36 @@ public class TablesReader {
         return readLineItem(spark, new String[]{path});
     }
 
+    public static Dataset readOrders(SparkSession spark, String path){
+        return readOrders(spark, new String[]{path});
+    }
+
+    public static Dataset readOrders(SparkSession spark, String [] path){
+
+        Dataset orders = spark
+                .read()
+                .option("delimiter", "|")
+                .csv(path);
+
+        orders = orders.withColumn("o_orderkey", col("_c0").cast(DataTypes.LongType));
+        orders = orders.withColumn("o_custkey", col("_c1").cast(DataTypes.LongType));
+        orders = orders.withColumn("o_orderstatus", col("_c2").cast(DataTypes.StringType));
+        orders = orders.withColumn("o_totalprice", col("_c3").cast(DataTypes.DoubleType));
+
+
+        orders = orders.withColumn("o_orderdate", col("_c4").cast(DataTypes.StringType));
+        orders = orders.withColumn("o_orderpriority", col("_c5").cast(DataTypes.StringType));
+        orders = orders.withColumn("o_clerk", col("_c6").cast(DataTypes.StringType));
+        orders = orders.withColumn("o_shippriority", col("_c7").cast(DataTypes.LongType));
+
+        orders = orders.withColumn("o_comment", col("_c8").cast(DataTypes.StringType));
+
+        orders = orders.select("o_orderkey", "o_custkey", "o_orderstatus", "o_totalprice", "o_orderdate", "o_orderpriority",
+                "o_clerk", "o_shippriority", "o_comment");
+
+        orders.show();
+
+        return orders;
+    }
+
 }
