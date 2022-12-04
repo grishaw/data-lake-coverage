@@ -1,0 +1,53 @@
+package index;
+
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.SparkSession;
+import tpch.TablesReader;
+
+import static org.apache.spark.sql.functions.*;
+
+public class Index {
+
+    public static void main(String[] args) {
+
+        String tablePath = args[0]; //"/Users/grishaw/dev/other/tpch/dbgen/lineitem10"
+        String indexPath = args[1]; //"/Users/grishaw/dev/other/tpch/dbgen/index/v3/lineitem10/"
+
+        String[] columns = args[2].split(","); //"l_shipdate", "l_discount", "l_quantity"
+
+        int maxRecordsPerFile = Integer.parseInt(args[3]); //20_000_000
+        int chunkSizeInMB = Integer.parseInt(args[4]); //128
+        int numOfFiles = Integer.parseInt(args[5]); //1
+
+        SparkSession sparkSession = initSparkSession("createIndex");
+
+        Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
+
+        Index.createLineItemIndex(lineItem, indexPath, columns, maxRecordsPerFile, chunkSizeInMB, numOfFiles);
+
+    }
+
+    public static void createLineItemIndex(Dataset df, String indexPath, String [] columns, int maxRecordsPerFile, int chunkSizeInMB, int numOfFiles){
+
+        df.sparkSession().sparkContext().hadoopConfiguration().setInt("parquet.block.size", 1024 * 1024 * chunkSizeInMB);
+
+        df = df
+                .withColumn("file", input_file_name())
+                .withColumn("id", concat(col("l_orderkey"), lit("_"), col("l_linenumber")));
+
+        for (String col : columns) {
+                df
+                    .select(col, "file", "id")
+                    .orderBy(col)
+                    .coalesce(numOfFiles)
+                    .write()
+                    .option("maxRecordsPerFile", maxRecordsPerFile)
+                    .parquet(indexPath + "/" + col + "/");
+        }
+    }
+
+    public static SparkSession initSparkSession(String appName) {
+        return SparkSession.builder().appName(appName).getOrCreate();
+    }
+
+}

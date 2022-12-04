@@ -6,7 +6,7 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static tpch.Utils.initTestSparkSession;
+import static testutils.MyUtils.initTestSparkSession;
 import static org.apache.spark.sql.functions.*;
 
 public class TablesReaderTest {

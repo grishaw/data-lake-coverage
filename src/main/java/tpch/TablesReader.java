@@ -8,7 +8,7 @@ import static org.apache.spark.sql.functions.col;
 
 public class TablesReader {
 
-    public static Dataset readLineItem(SparkSession spark, String path){
+    public static Dataset readLineItem(SparkSession spark, String [] path){
 
         Dataset lineItem = spark
                 .read()
@@ -41,6 +41,10 @@ public class TablesReader {
 
         return lineItem;
 
+    }
+
+    public static Dataset readLineItem(SparkSession spark, String path){
+        return readLineItem(spark, new String[]{path});
     }
 
 }
