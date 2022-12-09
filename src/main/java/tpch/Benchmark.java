@@ -125,7 +125,8 @@ public class Benchmark {
 
     private static void runBenchmark(SparkSession spark, String tablePath, String indexPath){
 
-        String [][] queries = {queryInput1, queryInput14};
+        String [][] queries = {queryInput1, queryInput2, queryInput3, queryInput4, queryInput5, queryInput6,
+                queryInput7, queryInput8, queryInput9, queryInput10, queryInput11, queryInput12, queryInput13, queryInput14};
 
         // warm up
         Dataset warmUp = TablesReader.readLineItem(spark, tablePath);
