@@ -1,5 +1,6 @@
 package index;
 
+import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
@@ -113,7 +114,7 @@ public class IndexTest {
                 .agg(sum(col("l_extendedprice").multiply(col("l_discount")))).as(Encoders.DOUBLE()).collectAsList().get(0);
     }
 
-    @Test
+    @Ignore
     public void benchmarkTest(){
 
         SparkSession sparkSession = initTestSparkSession("benchmarkTest");
