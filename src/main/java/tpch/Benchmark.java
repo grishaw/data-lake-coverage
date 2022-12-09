@@ -11,7 +11,6 @@ import java.util.List;
 import static index.Index.initSparkSession;
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.sum;
-import static scala.collection.JavaConverters.collectionAsScalaIterableConverter;
 
 public class Benchmark {
 
@@ -125,8 +124,7 @@ public class Benchmark {
 
     private static void runBenchmark(SparkSession spark, String tablePath, String indexPath){
 
-        String [][] queries = {queryInput1, queryInput2, queryInput3, queryInput4, queryInput5, queryInput6,
-                queryInput7, queryInput8, queryInput9, queryInput10, queryInput11, queryInput12, queryInput13, queryInput14};
+        String [][] queries = {queryInput1, queryInput14};
 
         // warm up
         Dataset warmUp = TablesReader.readLineItem(spark, tablePath);
@@ -158,9 +156,11 @@ public class Benchmark {
                 Dataset indexCommitDate = spark.read().parquet(indexPath + "l_commitdate").where(queryInput[3]);
 
                 Dataset joined = indexShipDate
-                        .join(indexExtendedPrice, collectionAsScalaIterableConverter(Arrays.asList("file", "id")).asScala().toSeq())
-                        .join(indexCommitDate, collectionAsScalaIterableConverter(Arrays.asList("file", "id")).asScala().toSeq())
-                        .select(indexShipDate.col("file"), indexShipDate.col("id"));
+                        .join(indexExtendedPrice, indexShipDate.col("file").equalTo(indexExtendedPrice.col("file"))
+                                .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
+                        .join(indexCommitDate, indexShipDate.col("file").equalTo(indexCommitDate.col("file"))
+                                .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
+                        .select(indexShipDate.col("file"), indexCommitDate.col("id"));
 
                 List<String> fileNames = (List<String>) joined.select("file").distinct().as(Encoders.STRING()).collectAsList();
 

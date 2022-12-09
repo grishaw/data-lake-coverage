@@ -14,7 +14,6 @@ import java.util.List;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.sum;
-import static scala.collection.JavaConverters.collectionAsScalaIterableConverter;
 import static testutils.MyUtils.initTestSparkSession;
 
 
@@ -253,9 +252,11 @@ public class IndexTest {
                 Dataset indexCommitDate = sparkSession.read().parquet(indexPath + "l_commitdate").where(queryInput[3]);
 
                 Dataset joined = indexShipDate
-                        .join(indexExtendedPrice, collectionAsScalaIterableConverter(Arrays.asList("file", "id")).asScala().toSeq())
-                        .join(indexCommitDate, collectionAsScalaIterableConverter(Arrays.asList("file", "id")).asScala().toSeq())
-                        .select(indexShipDate.col("file"), indexShipDate.col("id"));
+                        .join(indexExtendedPrice, indexShipDate.col("file").equalTo(indexExtendedPrice.col("file"))
+                                .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
+                        .join(indexCommitDate, indexShipDate.col("file").equalTo(indexCommitDate.col("file"))
+                                .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
+                        .select(indexShipDate.col("file"), indexCommitDate.col("id"));
 
                 List<String> fileNames = (List<String>) joined.select("file").distinct().as(Encoders.STRING()).collectAsList();
 
