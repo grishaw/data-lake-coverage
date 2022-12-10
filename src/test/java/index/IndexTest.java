@@ -26,7 +26,7 @@ public class IndexTest {
         Dataset lineItem = TablesReader.readLineItem(sparkSession, "src/test/resources/tables/lineitem.tbl");
 
         String indexPath = "target/index" + System.currentTimeMillis();
-        Index.createLineItemIndex(lineItem, indexPath, new String[]{"l_shipdate", "l_discount", "l_quantity"}, 10_000_000, 100, 1);
+        Index.createLineItemIndex(lineItem, indexPath, new String[]{"l_shipdate", "l_discount", "l_quantity"}, 10_000_000, 100, 1, false);
 
         Dataset shipDateIndex = sparkSession.read().parquet(indexPath + "/"+"l_shipdate");
         shipDateIndex.show();
@@ -46,7 +46,7 @@ public class IndexTest {
         Dataset lineItem = TablesReader.readLineItem(sparkSession, "src/test/resources/tables/lineitem.tbl");
 
         String indexPath = "target/index" + System.currentTimeMillis();
-        Index.createLineItemIndex(lineItem, indexPath, new String[]{"l_shipdate", "l_extendedprice", "l_commitdate"}, 100_000_000, 100, 1);
+        Index.createLineItemIndex(lineItem, indexPath, new String[]{"l_shipdate", "l_extendedprice", "l_commitdate"}, 100_000_000, 100, 1, false);
 
         Dataset result = sparkSession.read().parquet(indexPath + "/l_shipdate");
 

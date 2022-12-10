@@ -22,15 +22,17 @@ public class Index {
         int chunkSizeInMB = Integer.parseInt(args[4]); //128
         int numOfFiles = Integer.parseInt(args[5]); //1
 
+        boolean rootOnly = Boolean.parseBoolean(args[6]);
+
         SparkSession sparkSession = initSparkSession("createIndex");
 
         Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
 
-        Index.createLineItemIndex(lineItem, indexPath, columns, maxRecordsPerFile, chunkSizeInMB, numOfFiles);
+        Index.createLineItemIndex(lineItem, indexPath, columns, maxRecordsPerFile, chunkSizeInMB, numOfFiles, rootOnly);
 
     }
 
-    public static void createLineItemIndex(Dataset df, String indexPath, String [] columns, int maxRecordsPerFile, int chunkSizeInMB, int numOfFiles){
+    public static void createLineItemIndex(Dataset df, String indexPath, String [] columns, int maxRecordsPerFile, int chunkSizeInMB, int numOfFiles, boolean rootOnly){
 
         df.sparkSession().sparkContext().hadoopConfiguration().setInt("parquet.block.size", 1024 * 1024 * chunkSizeInMB);
 
@@ -42,23 +44,25 @@ public class Index {
 
         for (String col : columns) {
 
-                // create index
+            // create index
+            if (! rootOnly) {
                 df
-                    .select(col, "file", "id")
-                    .orderBy(col)
-                    .coalesce(numOfFiles)
-                    .write()
-                    .option("maxRecordsPerFile", maxRecordsPerFile)
-                    .parquet(indexPath + "/" + col + "/");
+                        .select(col, "file", "id")
+                        .orderBy(col)
+                        .coalesce(numOfFiles)
+                        .write()
+                        .option("maxRecordsPerFile", maxRecordsPerFile)
+                        .parquet(indexPath + "/" + col + "/");
+            }
 
-                // create root index
-                Dataset indexStored = df.sparkSession().read().parquet(indexPath + "/" + col + "/");
+            // create root index
+            Dataset indexStored = df.sparkSession().read().parquet(indexPath + "/" + col + "/");
 
-                Dataset currentRoot = indexStored
-                        .groupBy(lit(col).as("col"), input_file_name().as("file"))
-                        .agg(min(col).as("min"), max(col).as("max"), count(col).as("cnt"), countDistinct(col).as("cntd"));
+            Dataset currentRoot = indexStored
+                    .groupBy(lit(col).as("col"), input_file_name().as("file"))
+                    .agg(min(col).as("min"), max(col).as("max"), count(col).as("cnt"), countDistinct(col).as("cntd"));
 
-                rootIndex = rootIndex == null ? currentRoot : rootIndex.unionByName(currentRoot);
+            rootIndex = rootIndex == null ? currentRoot : rootIndex.unionByName(currentRoot);
 
         }
 
