@@ -1,12 +1,15 @@
 package index;
 
 import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.SaveMode;
 import org.apache.spark.sql.SparkSession;
 import tpch.TablesReader;
 
 import static org.apache.spark.sql.functions.*;
 
 public class Index {
+
+    public final static String rootIndexSuffix = "/root-index";
 
     public static void main(String[] args) {
 
@@ -35,7 +38,11 @@ public class Index {
                 .withColumn("file", input_file_name())
                 .withColumn("id", concat(col("l_orderkey"), lit("_"), col("l_linenumber")));
 
+        Dataset rootIndex = null;
+
         for (String col : columns) {
+
+                // create index
                 df
                     .select(col, "file", "id")
                     .orderBy(col)
@@ -43,7 +50,20 @@ public class Index {
                     .write()
                     .option("maxRecordsPerFile", maxRecordsPerFile)
                     .parquet(indexPath + "/" + col + "/");
+
+                // create root index
+                Dataset indexStored = df.sparkSession().read().parquet(indexPath + "/" + col + "/");
+
+                Dataset currentRoot = indexStored
+                        .groupBy(lit(col).as("col"), input_file_name().as("file"))
+                        .agg(min(col).as("min"), max(col).as("max"), count(col).as("cnt"), countDistinct(col).as("cntd"));
+
+                rootIndex = rootIndex == null ? currentRoot : rootIndex.unionByName(currentRoot);
+
         }
+
+        rootIndex.coalesce(1).write().mode(SaveMode.Overwrite).json(indexPath + "/" + rootIndexSuffix);
+
     }
 
     public static SparkSession initSparkSession(String appName) {

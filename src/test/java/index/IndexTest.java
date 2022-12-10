@@ -46,11 +46,15 @@ public class IndexTest {
         Dataset lineItem = TablesReader.readLineItem(sparkSession, "src/test/resources/tables/lineitem.tbl");
 
         String indexPath = "target/index" + System.currentTimeMillis();
-        Index.createLineItemIndex(lineItem, indexPath, new String[]{"l_shipdate"}, 100_000_000, 100, 1);
+        Index.createLineItemIndex(lineItem, indexPath, new String[]{"l_shipdate", "l_extendedprice", "l_commitdate"}, 100_000_000, 100, 1);
 
         Dataset result = sparkSession.read().parquet(indexPath + "/l_shipdate");
 
         result.show();
+
+        Dataset root = sparkSession.read().json((indexPath + "/" + Index.rootIndexSuffix));
+
+        root.show(100, false);
 
     }
 
