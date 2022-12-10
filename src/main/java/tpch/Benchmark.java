@@ -1,5 +1,6 @@
 package tpch;
 
+import index.Index;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
@@ -9,107 +10,107 @@ import java.util.LinkedList;
 import java.util.List;
 
 import static index.Index.initSparkSession;
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.sum;
+import static org.apache.spark.sql.functions.*;
+import static org.apache.spark.sql.functions.lit;
 
 public class Benchmark {
 
     static final String [] queryInput1 = {
             "query-1 (1% coverage)",
-            "l_extendedprice <= 969",
-            "l_shipdate >= '1994-01-06' and l_shipdate <= '1994-01-10'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-05'"
+            "969",
+            "1994-01-06", "1994-01-10",
+            "1994-01-01", "1994-01-05"
     };
 
     static final String [] queryInput2 = {
             "query-2 (5% coverage)",
-            "l_extendedprice <= 972",
-            "l_shipdate >= '1994-01-10' and l_shipdate <= '1994-01-20'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-09'"
+            "972",
+            "1994-01-10", "1994-01-20",
+            "1994-01-01", "1994-01-09"
     };
 
     static final String [] queryInput3 = {
             "query-3 (10% coverage)",
-            "l_extendedprice <= 980",
-            "l_shipdate >= '1994-01-16' and l_shipdate <= '1994-01-26'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-15'"
+            "980",
+            "1994-01-16", "1994-01-26",
+            "1994-01-01", "1994-01-15"
     };
 
     static final String [] queryInput4 = {
             "query-4 (20% coverage)",
-            "l_extendedprice <= 1001",
-            "l_shipdate >= '1994-01-20' and l_shipdate <= '1994-01-30'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-19'"
+            "1001",
+            "1994-01-20", "1994-01-30",
+            "1994-01-01", "1994-01-19"
     };
 
     static final String [] queryInput5 = {
             "query-5 (30% coverage)",
-            "l_extendedprice <= 1030",
-            "l_shipdate >= '1994-01-24' and l_shipdate <= '1994-02-01'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-23'"
+            "1030",
+            "1994-01-24", "1994-02-01",
+            "1994-01-01", "1994-01-23"
     };
 
     static final String [] queryInput6 = {
             "query-6 (40% coverage)",
-            "l_extendedprice <= 1050",
-            "l_shipdate >= '1994-01-26' and l_shipdate <= '1994-02-03'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-25'"
+            "1050",
+            "1994-01-26", "1994-02-03",
+            "1994-01-01", "1994-01-25"
     };
 
     static final String [] queryInput7 = {
             "query-7 (50% coverage)",
-            "l_extendedprice <= 1079",
-            "l_shipdate >= '1994-01-31' and l_shipdate <= '1994-02-06'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-30'"
+            "1079",
+            "1994-01-31", "1994-02-06",
+            "1994-01-01", "1994-01-30"
     };
 
     static final String [] queryInput8 = {
             "query-8 (60% coverage)",
-            "l_extendedprice <= 1092",
-            "l_shipdate >= '1994-01-31' and l_shipdate <= '1994-02-07'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-30'"
+            "1092",
+            "1994-01-31", "1994-02-07",
+            "1994-01-01", "1994-01-30"
     };
 
     static final String [] queryInput9 = {
             "query-9 (70% coverage)",
-            "l_extendedprice <= 1098",
-            "l_shipdate >= '1994-01-31' and l_shipdate <= '1994-02-09'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-30'"
+            "1098",
+            "1994-01-31", "1994-02-09",
+            "1994-01-01", "1994-01-30"
     };
 
     static final String [] queryInput10 = {
             "query-10 (80% coverage)",
-            "l_extendedprice <= 1105",
-            "l_shipdate >= '1994-02-01' and l_shipdate <= '1994-02-12'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-31'"
+            "1105",
+            "1994-02-01", "1994-02-12",
+            "1994-01-01", "1994-01-31"
     };
 
     static final String [] queryInput11 = {
             "query-11 (90% coverage)",
-            "l_extendedprice <= 1115",
-            "l_shipdate >= '1994-02-01' and l_shipdate <= '1994-02-16'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-31'"
+            "1115",
+            "1994-02-01", "1994-02-16",
+            "1994-01-01", "1994-01-31"
     };
 
     static final String [] queryInput12 = {
             "query-12 (95% coverage)",
-            "l_extendedprice <= 1122",
-            "l_shipdate >= '1994-02-01' and l_shipdate <= '1994-02-20'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-31'"
+            "1122",
+            "1994-02-01", "1994-02-20",
+            "1994-01-01", "1994-01-31"
     };
 
     static final String [] queryInput13 = {
             "query-13 (99% coverage)",
-            "l_extendedprice <= 1137",
-            "l_shipdate >= '1994-02-01' and l_shipdate <= '1994-03-01'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-31'"
+            "1137",
+            "1994-02-01", "1994-03-01",
+            "1994-01-01", "1994-01-31"
     };
 
     static final String [] queryInput14 = {
             "query-14 (100% coverage)",
-            "l_extendedprice <= 2000",
-            "l_shipdate >= '1994-02-01' and l_shipdate <= '1994-03-30'",
-            "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-31'"
+            "2000",
+            "1994-02-01", "1994-03-30",
+            "1994-01-01", "1994-01-31"
     };
 
     public static void main(String[] args) {
@@ -124,8 +125,10 @@ public class Benchmark {
 
     private static void runBenchmark(SparkSession spark, String tablePath, String indexPath){
 
-        String [][] queries = {queryInput1, queryInput2, queryInput3, queryInput4, queryInput5, queryInput6, queryInput7, queryInput8,
-                queryInput9, queryInput10, queryInput11, queryInput12, queryInput13, queryInput14};
+//        String [][] queries = {queryInput1, queryInput2, queryInput3, queryInput4, queryInput5, queryInput6, queryInput7, queryInput8,
+//                queryInput9, queryInput10, queryInput11, queryInput12, queryInput13, queryInput14};
+
+        String [][] queries = {queryInput1, queryInput2, queryInput13, queryInput14};
 
         // warm up
         Dataset warmUp = TablesReader.readLineItem(spark, tablePath);
@@ -135,11 +138,13 @@ public class Benchmark {
 
         List<List<String>> result = new LinkedList<>();
 
+        Dataset rootIndex = spark.read().json(indexPath + "/" + Index.rootIndexSuffix).cache();
+
         for (String[] queryInput : queries) {
 
             int num1=0, num2=0, num3=0;
             int numOfRetries = 3;
-            int numOfFiles = 0;
+            int numOfFiles = 0, numOfIndexFiles1=0, numOfIndexFiles2=0, numOfIndexFiles3=0;;
             for (int i=0; i<numOfRetries; i++) {
 
                 long start = System.currentTimeMillis();
@@ -152,9 +157,26 @@ public class Benchmark {
 
                 long start2a = System.currentTimeMillis();
 
-                Dataset indexExtendedPrice = spark.read().parquet(indexPath + "l_extendedprice").where(queryInput[1]);
-                Dataset indexShipDate = spark.read().parquet(indexPath + "l_shipdate").where(queryInput[2]);
-                Dataset indexCommitDate = spark.read().parquet(indexPath + "l_commitdate").where(queryInput[3]);
+                List<String> indexFileNamesExtendedPrice = rootIndex
+                        .where(col("col").equalTo("l_extendedprice").and(col("min").leq(lit(Integer.valueOf(queryInput[1])))))
+                        .select("file").distinct().as(Encoders.STRING()).collectAsList();
+                System.out.println("index files extendedPrice - " + indexFileNamesExtendedPrice);
+                Dataset indexExtendedPrice = spark.read().parquet(indexFileNamesExtendedPrice.toArray(new String[0]))
+                        .where(col("l_extendedprice").leq(lit(Integer.parseInt(queryInput[1]))));
+
+                List<String> indexFileNamesShipDate = rootIndex
+                        .where(col("col").equalTo("l_shipdate").and(not(col("max").lt(lit(queryInput[2])).or(col("min").gt(lit(queryInput[3]))))))
+                        .select("file").distinct().as(Encoders.STRING()).collectAsList();
+                System.out.println("index files l_shipdate - " + indexFileNamesShipDate);
+                Dataset indexShipDate = spark.read().parquet(indexFileNamesShipDate.toArray(new String[0]))
+                        .where(col("l_shipdate").geq(queryInput[2]).and(col("l_shipdate").leq(queryInput[3])));
+
+                List<String> indexFileNamesCommitDate = rootIndex
+                        .where(col("col").equalTo("l_commitdate").and(not(col("max").lt(lit(queryInput[4])).or(col("min").gt(lit(queryInput[5]))))))
+                        .select("file").distinct().as(Encoders.STRING()).collectAsList();
+                System.out.println("index files l_commitdate - " + indexFileNamesCommitDate);
+                Dataset indexCommitDate = spark.read().parquet(indexFileNamesCommitDate.toArray(new String[0]))
+                        .where(col("l_commitdate").geq(queryInput[4]).and(col("l_commitdate").leq(queryInput[5])));
 
                 Dataset joined = indexShipDate
                         .join(indexExtendedPrice, indexShipDate.col("file").equalTo(indexExtendedPrice.col("file"))
@@ -181,13 +203,19 @@ public class Benchmark {
                 num3 += (end2 - start2b) / 1000;
 
                 numOfFiles += fileNames.size();
+                numOfIndexFiles1 += indexFileNamesExtendedPrice.size();
+                numOfIndexFiles2 += indexFileNamesShipDate.size();
+                numOfIndexFiles3 += indexFileNamesCommitDate.size();
             }
 
             result.add(Arrays.asList(queryInput[0],
                     String.valueOf(Math.floor(1.0 * num1 / numOfRetries)),
                     String.valueOf(Math.floor(1.0 * num2 / numOfRetries)),
                     String.valueOf(Math.floor(1.0 * num3 / numOfRetries)),
-                    String.valueOf(numOfFiles / numOfRetries))
+                    String.valueOf(numOfFiles / numOfRetries),
+                    String.valueOf(numOfIndexFiles1 / numOfRetries),
+                    String.valueOf(numOfIndexFiles2 / numOfRetries),
+                    String.valueOf(numOfIndexFiles3 / numOfRetries))
             );
 
         }
@@ -196,6 +224,9 @@ public class Benchmark {
             System.out.println("--------------------------------------------");
             System.out.println(list.get(0));
             System.out.println("num of files : " + list.get(4));
+            System.out.println("num of l_extendedprice index files  : " + list.get(5));
+            System.out.println("num of l_shipdate index files  : " + list.get(6));
+            System.out.println("num of l_commitdate index files  : " + list.get(7));
             System.out.println("--------------------------------------------");
             System.out.println("no index took : " + list.get(1) + " seconds");
             System.out.println("with index took : " + list.get(2) + " seconds");
@@ -208,9 +239,9 @@ public class Benchmark {
 
     private static double runBenchmarkQuery(Dataset df, String[] queryInput){
         return df
-                .where(queryInput[1])
-                .where(queryInput[2])
-                .where(queryInput[3])
+                .where(col("l_extendedprice").leq(lit(Integer.parseInt(queryInput[1]))))
+                .where(col("l_shipdate").geq(queryInput[2]).and(col("l_shipdate").leq(queryInput[3])))
+                .where(col("l_commitdate").geq(queryInput[4]).and(col("l_commitdate").leq(queryInput[5])))
                 .groupBy()
                 .agg(sum(col("l_extendedprice").multiply(col("l_discount"))))
                 .as(Encoders.DOUBLE()).collectAsList().get(0);
