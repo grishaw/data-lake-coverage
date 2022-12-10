@@ -159,7 +159,7 @@ public class Benchmark {
                         .join(indexExtendedPrice, indexShipDate.col("file").equalTo(indexExtendedPrice.col("file"))
                                 .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
                         .join(indexCommitDate, indexShipDate.col("file").equalTo(indexCommitDate.col("file"))
-                                .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
+                                .and(indexShipDate.col("id").equalTo(indexCommitDate.col("id"))))
                         .select(indexShipDate.col("file"), indexCommitDate.col("id"));
 
                 List<String> fileNames = (List<String>) joined.select("file").distinct().as(Encoders.STRING()).collectAsList();

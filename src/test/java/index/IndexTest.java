@@ -219,8 +219,7 @@ public class IndexTest {
                 "l_commitdate >= '1994-01-01' and l_commitdate <= '1994-01-31'"
         };
 
-        String [][] queries = {queryInput1, queryInput2, queryInput3, queryInput4, queryInput5, queryInput6,
-                queryInput7, queryInput8, queryInput9, queryInput10, queryInput11, queryInput12, queryInput13, queryInput14};
+        String [][] queries = {queryInput1};
 
         // warm up
         Dataset warmUp = TablesReader.readLineItem(sparkSession, tablePath);
@@ -255,7 +254,7 @@ public class IndexTest {
                         .join(indexExtendedPrice, indexShipDate.col("file").equalTo(indexExtendedPrice.col("file"))
                                 .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
                         .join(indexCommitDate, indexShipDate.col("file").equalTo(indexCommitDate.col("file"))
-                                .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
+                                .and(indexShipDate.col("id").equalTo(indexCommitDate.col("id"))))
                         .select(indexShipDate.col("file"), indexCommitDate.col("id"));
 
                 List<String> fileNames = (List<String>) joined.select("file").distinct().as(Encoders.STRING()).collectAsList();
@@ -284,6 +283,9 @@ public class IndexTest {
             );
 
         }
+
+        // query 1 should have one file
+        Assertions.assertEquals(1, Integer.parseInt(result.get(0).get(4)));
 
         for (List<String> list : result){
             System.out.println("--------------------------------------------");
