@@ -138,17 +138,21 @@ public class BenchmarkTest {
         for (String[] queryInput : queries) {
 
             int num1=0, num2=0, num3=0;
-            int numOfRetries = 3;
-            int numOfFiles = 0, numOfIndexFiles1=0, numOfIndexFiles2=0, numOfIndexFiles3=0;
+            int numOfRetries = 2;
+            int numOfFiles = 0, numOfFilesGlobal = 0, numOfIndexFiles1=0, numOfIndexFiles2=0, numOfIndexFiles3=0;
             for (int i=0; i<numOfRetries; i++) {
 
                 long start = System.currentTimeMillis();
 
                 Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
 
-                double result1 = runBenchmarkQuery(lineItem, queryInput);
+                double result1 = runBenchmarkQuery(lineItem, queryInput, false);
 
                 long end = System.currentTimeMillis();
+
+                if (numOfFilesGlobal == 0) {
+                    numOfFilesGlobal = (int) runBenchmarkQuery(lineItem, queryInput, true);
+                }
 
                 long start2a = System.currentTimeMillis();
 
@@ -185,7 +189,7 @@ public class BenchmarkTest {
                 long start2b = System.currentTimeMillis();
 
                 Dataset lineItemViaIndex = TablesReader.readLineItem(sparkSession, fileNames.toArray(new String[0]));
-                double result2 = runBenchmarkQuery(lineItemViaIndex, queryInput);
+                double result2 = runBenchmarkQuery(lineItemViaIndex, queryInput, false);
 
                 long end2 = System.currentTimeMillis();
 
@@ -208,7 +212,9 @@ public class BenchmarkTest {
                     String.valueOf(numOfFiles / numOfRetries),
                     String.valueOf(numOfIndexFiles1 / numOfRetries),
                     String.valueOf(numOfIndexFiles2 / numOfRetries),
-                    String.valueOf(numOfIndexFiles3 / numOfRetries))
+                    String.valueOf(numOfIndexFiles3 / numOfRetries),
+                    String.valueOf(numOfFilesGlobal)
+                    )
             );
 
         }
@@ -219,7 +225,8 @@ public class BenchmarkTest {
         for (List<String> list : result){
             System.out.println("--------------------------------------------");
             System.out.println(list.get(0));
-            System.out.println("num of files : " + list.get(4));
+            System.out.println("num of coverage files : " + list.get(4));
+            System.out.println("num of tight coverage files : " + list.get(8));
             System.out.println("num of l_extendedprice index files  : " + list.get(5));
             System.out.println("num of l_shipdate index files  : " + list.get(6));
             System.out.println("num of l_commitdate index files  : " + list.get(7));
@@ -234,12 +241,22 @@ public class BenchmarkTest {
 
     }
 
-    private static double runBenchmarkQuery(Dataset df, String[] queryInput){
+    private static double runBenchmarkQuery(Dataset df, String[] queryInput, boolean getNumOfFiles){
+
+        if (getNumOfFiles){
+            return df
+                    .where(col("l_extendedprice").leq(lit(Integer.parseInt(queryInput[1]))))
+                    .where(col("l_shipdate").geq(queryInput[2]).and(col("l_shipdate").leq(queryInput[3])))
+                    .where(col("l_commitdate").geq(queryInput[4]).and(col("l_commitdate").leq(queryInput[5])))
+                    .where("l_discount >= 0.02 and l_discount <= 0.09 and l_quantity < 35")
+                    .select(input_file_name()).distinct().count();
+        }
 
         return df
                 .where(col("l_extendedprice").leq(lit(Integer.parseInt(queryInput[1]))))
                 .where(col("l_shipdate").geq(queryInput[2]).and(col("l_shipdate").leq(queryInput[3])))
                 .where(col("l_commitdate").geq(queryInput[4]).and(col("l_commitdate").leq(queryInput[5])))
+                .where("l_discount >= 0.02 and l_discount <= 0.09 and l_quantity < 35")
                 .groupBy()
                 .agg(sum(col("l_extendedprice").multiply(col("l_discount"))))
                 .as(Encoders.DOUBLE()).collectAsList().get(0);
