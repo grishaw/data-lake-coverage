@@ -18,7 +18,7 @@ import static testutils.MyUtils.initTestSparkSession;
 
 public class BenchmarkTest {
 
-    @Test
+    @Ignore
     public void benchmarkTest(){
 
         SparkSession sparkSession = initTestSparkSession("benchmarkTest");
@@ -36,14 +36,15 @@ public class BenchmarkTest {
 
         for (String[] queryInput : queries) {
 
-            int num1=0, num2=0, num3=0;
-            int numOfRetries = 2;
-            int numOfFiles = 0, numOfIndexFiles1=0, numOfIndexFiles2=0, numOfIndexFiles3=0;
+            int timeNoIndex=0, timeWithIndex=0;
+            int numOfRetries = 3;
+            int numOfFiles = 0, numOfIndexFiles=0;
 
             long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(sparkSession, tablePath), queryInput);
 
             for (int i=0; i<numOfRetries; i++) {
 
+                // test - no index
                 long start = System.currentTimeMillis();
 
                 Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
@@ -52,7 +53,8 @@ public class BenchmarkTest {
 
                 long end = System.currentTimeMillis();
 
-                long start2a = System.currentTimeMillis();
+                // test with index
+                long start2 = System.currentTimeMillis();
 
                 List<String> indexFileNamesExtendedPrice = rootIndex
                         .where(col("col").equalTo("l_extendedprice").and(col("min").leq(lit(Integer.valueOf(queryInput[1])))))
@@ -84,8 +86,6 @@ public class BenchmarkTest {
 
                 List<String> fileNames = (List<String>) joined.select("file").distinct().as(Encoders.STRING()).collectAsList();
 
-                long start2b = System.currentTimeMillis();
-
                 Dataset lineItemViaIndex = TablesReader.readLineItem(sparkSession, fileNames.toArray(new String[0]));
                 double result2 = runBenchmarkQuery(lineItemViaIndex, queryInput);
 
@@ -93,24 +93,18 @@ public class BenchmarkTest {
 
                 Assertions.assertEquals(result1, result2, 0.001);
 
-                num1 += (end - start) / 1000;
-                num2 += (end2 - start2a) / 1000;
-                num3 += (end2 - start2b) / 1000;
+                timeNoIndex += (end - start) / 1000;
+                timeWithIndex += (end2 - start2) / 1000;
 
                 numOfFiles += fileNames.size();
-                numOfIndexFiles1 += indexFileNamesExtendedPrice.size();
-                numOfIndexFiles2 += indexFileNamesShipDate.size();
-                numOfIndexFiles3 += indexFileNamesCommitDate.size();
+                numOfIndexFiles += (indexFileNamesExtendedPrice.size() + indexFileNamesShipDate.size() + indexFileNamesCommitDate.size());
             }
 
             result.add(Arrays.asList(queryInput[0],
-                    String.valueOf(Math.floor(1.0 * num1 / numOfRetries)),
-                    String.valueOf(Math.floor(1.0 * num2 / numOfRetries)),
-                    String.valueOf(Math.floor(1.0 * num3 / numOfRetries)),
+                    String.valueOf(Math.floor(1.0 * timeNoIndex / numOfRetries)),
+                    String.valueOf(Math.floor(1.0 * timeWithIndex / numOfRetries)),
                     String.valueOf(numOfFiles / numOfRetries),
-                    String.valueOf(numOfIndexFiles1 / numOfRetries),
-                    String.valueOf(numOfIndexFiles2 / numOfRetries),
-                    String.valueOf(numOfIndexFiles3 / numOfRetries),
+                    String.valueOf(numOfIndexFiles / numOfRetries),
                     String.valueOf(tightCoverageSize)
                     )
             );
@@ -118,22 +112,18 @@ public class BenchmarkTest {
         }
 
         // query 1 should have one file
-        Assertions.assertEquals(1, Integer.parseInt(result.get(0).get(4)));
+        Assertions.assertEquals(1, Integer.parseInt(result.get(0).get(3)));
 
         for (List<String> list : result){
             System.out.println("--------------------------------------------");
             System.out.println(list.get(0));
-            System.out.println("num of coverage files : " + list.get(4));
-            System.out.println("num of tight coverage files : " + list.get(8));
-            System.out.println("num of l_extendedprice index files  : " + list.get(5));
-            System.out.println("num of l_shipdate index files  : " + list.get(6));
-            System.out.println("num of l_commitdate index files  : " + list.get(7));
             System.out.println("--------------------------------------------");
             System.out.println("no index took : " + list.get(1) + " seconds");
-            System.out.println("with index (via root) took : " + list.get(2) + " seconds");
-            System.out.println("with files only took : " + list.get(3) + " seconds");
+            System.out.println("with index took : " + list.get(2) + " seconds");
             System.out.println("--------------------------------------------");
-            System.out.println("--------------------------------------------");
+            System.out.println("num of coverage files : " + list.get(3));
+            System.out.println("num of index files  : " + list.get(4));
+            System.out.println("num of tight coverage files : " + list.get(5));
             System.out.println("*********************************************");
         }
 
