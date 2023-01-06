@@ -13,47 +13,43 @@ public class Index {
 
     public static void main(String[] args) {
 
-        String tablePath = args[0]; //"/Users/grishaw/dev/other/tpch/dbgen/lineitem10"
-        String indexPath = args[1]; //"/Users/grishaw/dev/other/tpch/dbgen/index/v3/lineitem10/"
+        String tablePath = args[0];
+        String indexPath = args[1];
 
-        String[] columns = args[2].split(","); //"l_shipdate", "l_discount", "l_quantity"
+        String[] columns = args[2].split(",");
 
-        int maxRecordsPerFile = Integer.parseInt(args[3]); //20_000_000
-        int chunkSizeInMB = Integer.parseInt(args[4]); //128
-        int numOfFiles = Integer.parseInt(args[5]); //1
-
-        boolean rootOnly = Boolean.parseBoolean(args[6]);
+        int maxRecordsPerFile = Integer.parseInt(args[3]);
+        int chunkSizeInMB = Integer.parseInt(args[4]);
+        int numOfFiles = Integer.parseInt(args[5]);
 
         SparkSession sparkSession = initSparkSession("createIndex");
 
         Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
 
-        Index.createLineItemIndex(lineItem, indexPath, columns, maxRecordsPerFile, chunkSizeInMB, numOfFiles, rootOnly);
+        Index.createLineItemIndex(lineItem, indexPath, columns, maxRecordsPerFile, chunkSizeInMB, numOfFiles);
 
     }
 
-    public static void createLineItemIndex(Dataset df, String indexPath, String [] columns, int maxRecordsPerFile, int chunkSizeInMB, int numOfFiles, boolean rootOnly){
+    public static void createLineItemIndex(Dataset df, String indexPath, String [] columns, int maxRecordsPerFile, int chunkSizeInMB, int numOfFiles){
 
         df.sparkSession().sparkContext().hadoopConfiguration().setInt("parquet.block.size", 1024 * 1024 * chunkSizeInMB);
 
         df = df
                 .withColumn("file", input_file_name())
-                .withColumn("id", concat(col("l_orderkey"), lit("_"), col("l_linenumber")));
+                .withColumn("id", concat(col("l_orderkey"), lit("_"), col("l_linenumber"))); //lineitem pk is (orderkey,linenumber)
 
         Dataset rootIndex = null;
 
         for (String col : columns) {
 
             // create index
-            if (! rootOnly) {
-                df
-                        .select(col, "file", "id")
-                        .orderBy(col)
-                        .coalesce(numOfFiles)
-                        .write()
-                        .option("maxRecordsPerFile", maxRecordsPerFile)
-                        .parquet(indexPath + "/" + col + "/");
-            }
+            df
+                    .select(col, "file", "id")
+                    .orderBy(col)
+                    .coalesce(numOfFiles)
+                    .write()
+                    .option("maxRecordsPerFile", maxRecordsPerFile)
+                    .parquet(indexPath + "/" + col + "/");
 
             // create root index
             Dataset indexStored = df.sparkSession().read().parquet(indexPath + "/" + col + "/");
@@ -63,7 +59,6 @@ public class Index {
                     .agg(min(col).as("min"), max(col).as("max"), count(col).as("cnt"), countDistinct(col).as("cntd"));
 
             rootIndex = rootIndex == null ? currentRoot : rootIndex.unionByName(currentRoot);
-
         }
 
         rootIndex.coalesce(1).write().mode(SaveMode.Overwrite).json(indexPath + "/" + rootIndexSuffix);
