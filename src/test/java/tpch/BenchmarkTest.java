@@ -2,6 +2,7 @@ package tpch;
 
 import index.Index;
 import jdk.nashorn.internal.ir.annotations.Ignore;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.SparkSession;
@@ -17,7 +18,7 @@ import static testutils.MyUtils.initTestSparkSession;
 
 public class BenchmarkTest {
 
-    @Ignore
+    @Test
     public void benchmarkTest(){
 
         SparkSession sparkSession = initTestSparkSession("benchmarkTest");
@@ -25,109 +26,7 @@ public class BenchmarkTest {
         String tablePath = "/Users/grishaw/dev/other/tpch/dbgen/lineitem10";
         String indexPath = "/Users/grishaw/dev/other/tpch/dbgen/index/v3/lineitem10/";
 
-        String [] queryInput1 = {
-                "query-1 (1% coverage)",
-                "969",
-                "1994-01-06", "1994-01-10",
-                "1994-01-01", "1994-01-05"
-        };
-
-        String [] queryInput2 = {
-                "query-2 (5% coverage)",
-                "972",
-                "1994-01-10", "1994-01-20",
-                "1994-01-01", "1994-01-09"
-        };
-
-        String [] queryInput3 = {
-                "query-3 (10% coverage)",
-                "980",
-                "1994-01-16", "1994-01-26",
-                "1994-01-01", "1994-01-15"
-        };
-
-        String [] queryInput4 = {
-                "query-4 (20% coverage)",
-                "1001",
-                "1994-01-20", "1994-01-30",
-                "1994-01-01", "1994-01-19"
-        };
-
-        String [] queryInput5 = {
-                "query-5 (30% coverage)",
-                "1030",
-                "1994-01-24", "1994-02-01",
-                "1994-01-01", "1994-01-23"
-        };
-
-        String [] queryInput6 = {
-                "query-6 (40% coverage)",
-                "1050",
-                "1994-01-26", "1994-02-03",
-                "1994-01-01", "1994-01-25"
-        };
-
-        String [] queryInput7 = {
-                "query-7 (50% coverage)",
-                "1079",
-                "1994-01-31", "1994-02-06",
-                "1994-01-01", "1994-01-30"
-        };
-
-        String [] queryInput8 = {
-                "query-8 (60% coverage)",
-                "1092",
-                "1994-01-31", "1994-02-07",
-                "1994-01-01", "1994-01-30"
-        };
-
-        String [] queryInput9 = {
-                "query-9 (70% coverage)",
-                "1098",
-                "1994-01-31", "1994-02-09",
-                "1994-01-01", "1994-01-30"
-        };
-
-        String [] queryInput10 = {
-                "query-10 (80% coverage)",
-                "1105",
-                "1994-02-01", "1994-02-12",
-                "1994-01-01", "1994-01-31"
-        };
-
-        String [] queryInput11 = {
-                "query-11 (90% coverage)",
-                "1115",
-                "1994-02-01", "1994-02-16",
-                "1994-01-01", "1994-01-31"
-        };
-
-        String [] queryInput12 = {
-                "query-12 (95% coverage)",
-                "1122",
-                "1994-02-01", "1994-02-20",
-                "1994-01-01", "1994-01-31"
-        };
-
-        String [] queryInput13 = {
-                "query-13 (99% coverage)",
-                "1137",
-                "1994-02-01", "1994-03-01",
-                "1994-01-01", "1994-01-31"
-        };
-
-        String [] queryInput14 = {
-                "query-14 (100% coverage)",
-                "2000",
-                "1994-02-01", "1994-03-30",
-                "1994-01-01", "1994-01-31"
-        };
-
-        String [][] queries = {queryInput1, queryInput7, queryInput14};
-
-        // warm up
-        Dataset warmUp = TablesReader.readLineItem(sparkSession, tablePath);
-        warmUp.count();
+        String [][] queries = {Benchmark.queryInput1, Benchmark.queryInput7, Benchmark.queryInput14};
 
         // TODO check different subsets
 
@@ -139,20 +38,19 @@ public class BenchmarkTest {
 
             int num1=0, num2=0, num3=0;
             int numOfRetries = 2;
-            int numOfFiles = 0, numOfFilesGlobal = 0, numOfIndexFiles1=0, numOfIndexFiles2=0, numOfIndexFiles3=0;
+            int numOfFiles = 0, numOfIndexFiles1=0, numOfIndexFiles2=0, numOfIndexFiles3=0;
+
+            long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(sparkSession, tablePath), queryInput);
+
             for (int i=0; i<numOfRetries; i++) {
 
                 long start = System.currentTimeMillis();
 
                 Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
 
-                double result1 = runBenchmarkQuery(lineItem, queryInput, false);
+                double result1 = runBenchmarkQuery(lineItem, queryInput);
 
                 long end = System.currentTimeMillis();
-
-                if (numOfFilesGlobal == 0) {
-                    numOfFilesGlobal = (int) runBenchmarkQuery(lineItem, queryInput, true);
-                }
 
                 long start2a = System.currentTimeMillis();
 
@@ -189,7 +87,7 @@ public class BenchmarkTest {
                 long start2b = System.currentTimeMillis();
 
                 Dataset lineItemViaIndex = TablesReader.readLineItem(sparkSession, fileNames.toArray(new String[0]));
-                double result2 = runBenchmarkQuery(lineItemViaIndex, queryInput, false);
+                double result2 = runBenchmarkQuery(lineItemViaIndex, queryInput);
 
                 long end2 = System.currentTimeMillis();
 
@@ -213,7 +111,7 @@ public class BenchmarkTest {
                     String.valueOf(numOfIndexFiles1 / numOfRetries),
                     String.valueOf(numOfIndexFiles2 / numOfRetries),
                     String.valueOf(numOfIndexFiles3 / numOfRetries),
-                    String.valueOf(numOfFilesGlobal)
+                    String.valueOf(tightCoverageSize)
                     )
             );
 
@@ -241,28 +139,26 @@ public class BenchmarkTest {
 
     }
 
-    private static double runBenchmarkQuery(Dataset df, String[] queryInput, boolean getNumOfFiles){
-
-        if (getNumOfFiles){
-            return df
-                    .where(col("l_extendedprice").leq(lit(Integer.parseInt(queryInput[1]))))
-                    .where(col("l_shipdate").geq(queryInput[2]).and(col("l_shipdate").leq(queryInput[3])))
-                    .where(col("l_commitdate").geq(queryInput[4]).and(col("l_commitdate").leq(queryInput[5])))
-                    .where("l_discount >= 0.02 and l_discount <= 0.09 and l_quantity < 35")
-                    .select(input_file_name()).distinct().count();
-        }
-
+    private static long getTightCoverageSize(Dataset df, String[] queryInput){
         return df
-                .where(col("l_extendedprice").leq(lit(Integer.parseInt(queryInput[1]))))
-                .where(col("l_shipdate").geq(queryInput[2]).and(col("l_shipdate").leq(queryInput[3])))
-                .where(col("l_commitdate").geq(queryInput[4]).and(col("l_commitdate").leq(queryInput[5])))
-                .where("l_discount >= 0.02 and l_discount <= 0.09 and l_quantity < 35")
+                .where(getQuery6Condition(queryInput))
+                .select(input_file_name()).distinct().count();
+    }
+
+    private static double runBenchmarkQuery(Dataset df, String[] queryInput){
+        return df
+                .where(getQuery6Condition(queryInput))
                 .groupBy()
                 .agg(sum(col("l_extendedprice").multiply(col("l_discount"))))
                 .as(Encoders.DOUBLE()).collectAsList().get(0);
-
     }
 
-
+    private static Column getQuery6Condition(String[] q){
+        return col("l_extendedprice").leq(lit(Integer.parseInt(q[1])))
+                .and(col("l_shipdate").geq(q[2])).and(col("l_shipdate").leq(q[3]))
+                .and(col("l_commitdate").geq(q[4])).and(col("l_commitdate").leq(q[5]))
+                .and(col("l_discount").geq(0.02)).and(col("l_discount").leq( 0.09))
+                .and(col("l_quantity").lt(35));
+    }
 
 }
