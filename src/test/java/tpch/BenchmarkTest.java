@@ -23,10 +23,10 @@ public class BenchmarkTest {
 
         SparkSession sparkSession = initTestSparkSession("benchmarkTest");
 
-        String tablePath = "/Users/grishaw/dev/other/tpch/dbgen/lineitem10";
-        String indexPath = "/Users/grishaw/dev/other/tpch/dbgen/index/v3/lineitem10/";
+        String tablePath = "/Users/grishaw/dev/other/tpch/dbgen/lineitem1/";
+        String indexPath = "/Users/grishaw/dev/other/tpch/dbgen/index/v10/lineitem1/";
 
-        String [][] queries = {Benchmark.queryInput1, Benchmark.queryInput7, Benchmark.queryInput14};
+        String [][] queries = {Benchmark.queryInput6, Benchmark.queryInput12, Benchmark.queryInput14};
 
         // TODO check different subsets
 
@@ -37,7 +37,7 @@ public class BenchmarkTest {
         for (String[] queryInput : queries) {
 
             int timeNoIndex=0, timeWithIndex=0;
-            int numOfRetries = 3;
+            int numOfRetries = 2;
             int numOfFiles = 0, numOfIndexFiles=0;
 
             long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(sparkSession, tablePath), queryInput);
@@ -110,9 +110,6 @@ public class BenchmarkTest {
             );
 
         }
-
-        // query 1 should have one file
-        Assertions.assertEquals(1, Integer.parseInt(result.get(0).get(3)));
 
         for (List<String> list : result){
             System.out.println("--------------------------------------------");
