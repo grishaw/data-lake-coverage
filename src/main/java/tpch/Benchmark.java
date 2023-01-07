@@ -15,98 +15,98 @@ import static org.apache.spark.sql.functions.lit;
 
 public class Benchmark {
 
-    static final String [] queryInput1 = {
+    public static final String [] queryInput1 = {
             "query-1 (1% coverage)",
             "969",
             "1994-01-06", "1994-01-10",
             "1994-01-01", "1994-01-05"
     };
 
-    static final String [] queryInput2 = {
+    public static final String [] queryInput2 = {
             "query-2 (5% coverage)",
             "972",
             "1994-01-10", "1994-01-20",
             "1994-01-01", "1994-01-09"
     };
 
-    static final String [] queryInput3 = {
+    public static final String [] queryInput3 = {
             "query-3 (10% coverage)",
             "980",
             "1994-01-16", "1994-01-26",
             "1994-01-01", "1994-01-15"
     };
 
-    static final String [] queryInput4 = {
+    public static final String [] queryInput4 = {
             "query-4 (20% coverage)",
             "1001",
             "1994-01-20", "1994-01-30",
             "1994-01-01", "1994-01-19"
     };
 
-    static final String [] queryInput5 = {
+    public static final String [] queryInput5 = {
             "query-5 (30% coverage)",
             "1030",
             "1994-01-24", "1994-02-01",
             "1994-01-01", "1994-01-23"
     };
 
-    static final String [] queryInput6 = {
+    public static final String [] queryInput6 = {
             "query-6 (40% coverage)",
             "1050",
             "1994-01-26", "1994-02-03",
             "1994-01-01", "1994-01-25"
     };
 
-    static final String [] queryInput7 = {
+    public static final String [] queryInput7 = {
             "query-7 (50% coverage)",
             "1079",
             "1994-01-31", "1994-02-06",
             "1994-01-01", "1994-01-30"
     };
 
-    static final String [] queryInput8 = {
+    public static final String [] queryInput8 = {
             "query-8 (60% coverage)",
             "1092",
             "1994-01-31", "1994-02-07",
             "1994-01-01", "1994-01-30"
     };
 
-    static final String [] queryInput9 = {
+    public static final String [] queryInput9 = {
             "query-9 (70% coverage)",
             "1098",
             "1994-01-31", "1994-02-09",
             "1994-01-01", "1994-01-30"
     };
 
-    static final String [] queryInput10 = {
+    public static final String [] queryInput10 = {
             "query-10 (80% coverage)",
             "1105",
             "1994-02-01", "1994-02-12",
             "1994-01-01", "1994-01-31"
     };
 
-    static final String [] queryInput11 = {
+    public static final String [] queryInput11 = {
             "query-11 (90% coverage)",
             "1115",
             "1994-02-01", "1994-02-16",
             "1994-01-01", "1994-01-31"
     };
 
-    static final String [] queryInput12 = {
+    public static final String [] queryInput12 = {
             "query-12 (95% coverage)",
             "1122",
             "1994-02-01", "1994-02-20",
             "1994-01-01", "1994-01-31"
     };
 
-    static final String [] queryInput13 = {
+    public static final String [] queryInput13 = {
             "query-13 (99% coverage)",
             "1137",
             "1994-02-01", "1994-03-01",
             "1994-01-01", "1994-01-31"
     };
 
-    static final String [] queryInput14 = {
+    public static final String [] queryInput14 = {
             "query-14 (100% coverage)",
             "2000",
             "1994-02-01", "1994-03-30",
