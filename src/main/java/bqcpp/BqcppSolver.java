@@ -6,6 +6,8 @@ import org.apache.spark.sql.Encoders;
 import org.apache.spark.sql.types.DataTypes;
 
 import java.util.Collection;
+import java.util.Comparator;
+import java.util.stream.Collectors;
 
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.col;
@@ -58,6 +60,26 @@ public class BqcppSolver {
 
             }
         }
+
+    }
+
+    public static Plan getBalancedPlanByGreedyAlgorithm(Collection<Clause> clauses){
+
+        Plan result = new Plan();
+
+        for (Clause c : clauses.stream().sorted(Comparator.comparing(Clause::getTotalCost)).collect(Collectors.toList())){
+            if (result.clauses.isEmpty()){
+                result.clauses.add(c);
+                result.cost = c.cost;
+            }else if (result.getExpectedTotalCost(c) < result.getTotalCost()){
+                result.clauses.add(c);
+                result.cost += c.cost;
+            }else{
+                break;
+            }
+        }
+
+        return result;
 
     }
 

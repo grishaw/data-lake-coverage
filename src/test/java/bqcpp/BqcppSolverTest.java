@@ -114,6 +114,9 @@ public class BqcppSolverTest {
 
         final long N = 5999989709L;
 
+        // for local test
+        //final long N = 6001215L;
+
         final long F = 10000;
 
         final double factor = 0.9999; // (F -1) / F
@@ -139,8 +142,8 @@ public class BqcppSolverTest {
                                             .multiply(col("cnt")).cast(DataTypes.LongType))
                                     .otherwise(
                                             datediff(col("max"), lit(q[3]))
-                                                    .divide(datediff(col("max"), col("min"))
-                                                            .multiply(col("cnt"))).cast(DataTypes.LongType)))
+                                                    .divide(datediff(col("max"), col("min")))
+                                                            .multiply(col("cnt")).cast(DataTypes.LongType)))
                     )
                     .groupBy().sum("my_cnt").as(Encoders.LONG()).collectAsList().get(0);
 
@@ -153,8 +156,8 @@ public class BqcppSolverTest {
                                                     .multiply(col("cnt")).cast(DataTypes.LongType))
                                             .otherwise(
                                                     datediff(col("max"), lit(q[5]))
-                                                            .divide(datediff(col("max"), col("min"))
-                                                                    .multiply(col("cnt"))).cast(DataTypes.LongType)))
+                                                            .divide(datediff(col("max"), col("min")))
+                                                                    .multiply(col("cnt")).cast(DataTypes.LongType)))
                     )
                     .groupBy().sum("my_cnt").as(Encoders.LONG()).collectAsList().get(0);
 
@@ -163,11 +166,11 @@ public class BqcppSolverTest {
             long filesEstimation = (long) (F * (1 - Math.pow(factor, recordsEstimation)));
 
 
-            results.add(Arrays.asList(q[0], String.valueOf(recordsEstimation), String.valueOf(filesEstimation)));
+            results.add(Arrays.asList(q[0], String.valueOf(recordsEstimation), String.valueOf(filesEstimation), String.valueOf(val1), String.valueOf(val2),String.valueOf(val3)));
         }
 
         for (List<String> list : results){
-            System.out.println(list.get(0) + " -- " + list.get(1)+ " -- " + list.get(2));
+            System.out.println(list.get(0) + " -- " + list.get(1)+ " -- " + list.get(2) + "(" + list.get(3) + "," + list.get(4) + "," + list.get(5) + ")");
         }
 
     }
@@ -196,6 +199,37 @@ public class BqcppSolverTest {
 
     }
 
+    @Test
+    public void getBalancedPlanByGreedyAlgorithmTest(){
 
+        SparkSession sparkSession = MyUtils.initTestSparkSession("getBalancedPlanByGreedyAlgorithmTest");
+
+        Dataset rootIndex = sparkSession.read().json("src/test/resources/root-index/root.json").cache();
+
+        List<Clause>[] queries = new List[]{q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14};
+
+        for (List<Clause> q : queries) {
+            BqcppSolver.assignEstimations(q, rootIndex);
+        }
+
+        for (List<Clause> q : queries) {
+            Plan p = BqcppSolver.getBalancedPlanByGreedyAlgorithm(q);
+            System.out.println(p);
+            System.out.println(getFilesNumber(q));
+            System.out.println("-----------------------------");
+        }
+
+
+    }
+
+    static long getFilesNumber(List<Clause> clauses){
+        final long N = 5999989709L;
+        final long F = 10000;
+        final double factor = 0.9999;
+
+        long recordsEstimation = (long) ((clauses.get(0).result * 1.0 / N) * (clauses.get(1).result * 1.0 / N ) * (clauses.get(2).result));
+
+        return (long) (F * (1 - Math.pow(factor, recordsEstimation)));
+    }
 
 }

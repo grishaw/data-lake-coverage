@@ -2,11 +2,17 @@ package bqcpp;
 
 public class Clause {
 
+    // number of files in the data lake
+    final long F = 10000;
+
+    // (F -1) / F
+    final double factor = 0.9999;
+
     // number of index files read from the storage
-    Long cost;
+    long cost;
 
     // estimated number of result records
-    Long result;
+    long result;
 
     ClauseType type;
 
@@ -33,5 +39,12 @@ public class Clause {
                 ", columnValue1='" + columnValue1 + '\'' +
                 ", columnValue2='" + columnValue2 + '\'' +
                 '}';
+    }
+
+    public long getTotalCost(){
+
+        long filesEstimation = (long) (F * (1 - Math.pow(factor, result)));
+
+        return filesEstimation + cost;
     }
 }
