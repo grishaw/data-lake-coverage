@@ -145,11 +145,31 @@ public class BqcppSolverTest {
 
             long val2 = df
                     .where(col("col").equalTo("l_shipdate").and(not(col("max").lt(lit(q[2])).or(col("min").gt(lit(q[3]))))))
-                    .groupBy().sum("cnt").as(Encoders.LONG()).collectAsList().get(0);
+                    .withColumn("my_cnt",
+                            when(col("min").geq(q[2]).and(col("max").leq(q[3])), col("cnt"))
+                                    .otherwise(when(col("min").lt(q[2]), datediff(lit(q[2]), col("min"))
+                                            .divide(datediff(col("max"), col("min"))
+                                            .multiply(col("cnt"))).cast(DataTypes.LongType))
+                                    .otherwise(
+                                            datediff(col("max"), lit(q[3]))
+                                                    .divide(datediff(col("max"), col("min"))
+                                                            .multiply(col("cnt"))).cast(DataTypes.LongType)))
+                    )
+                    .groupBy().sum("my_cnt").as(Encoders.LONG()).collectAsList().get(0);
 
             long val3 = df
                     .where(col("col").equalTo("l_commitdate").and(not(col("max").lt(lit(q[4])).or(col("min").gt(lit(q[5]))))))
-                    .groupBy().sum("cnt").as(Encoders.LONG()).collectAsList().get(0);
+                    .withColumn("my_cnt",
+                            when(col("min").geq(q[4]).and(col("max").leq(q[5])), col("cnt"))
+                                    .otherwise(when(col("min").lt(q[4]), datediff(lit(q[4]), col("min"))
+                                            .divide(datediff(col("max"), col("min"))
+                                                    .multiply(col("cnt"))).cast(DataTypes.LongType))
+                                            .otherwise(
+                                                    datediff(col("max"), lit(q[5]))
+                                                            .divide(datediff(col("max"), col("min"))
+                                                                    .multiply(col("cnt"))).cast(DataTypes.LongType)))
+                    )
+                    .groupBy().sum("my_cnt").as(Encoders.LONG()).collectAsList().get(0);
 
             long recordsEstimation = (long) ((val1 * 1.0 / N) * (val2 * 1.0 / N ) * val3);
 
