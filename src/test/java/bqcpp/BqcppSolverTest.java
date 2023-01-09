@@ -206,6 +206,8 @@ public class BqcppSolverTest {
 
         Dataset rootIndex = sparkSession.read().json("src/test/resources/root-index/root.json").cache();
 
+        //Dataset rootIndex = sparkSession.read().json("/Users/grishaw/dev/other/tpch/dbgen/index/v10/lineitem1/root-index/").cache();
+
         List<Clause>[] queries = new List[]{q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14};
 
         for (List<Clause> q : queries) {
@@ -215,21 +217,10 @@ public class BqcppSolverTest {
         for (List<Clause> q : queries) {
             Plan p = BqcppSolver.getBalancedPlanByGreedyAlgorithm(q);
             System.out.println(p);
-            System.out.println(getFilesNumber(q));
             System.out.println("-----------------------------");
         }
 
 
-    }
-
-    static long getFilesNumber(List<Clause> clauses){
-        final long N = 5999989709L;
-        final long F = 10000;
-        final double factor = 0.9999;
-
-        long recordsEstimation = (long) ((clauses.get(0).result * 1.0 / N) * (clauses.get(1).result * 1.0 / N ) * (clauses.get(2).result));
-
-        return (long) (F * (1 - Math.pow(factor, recordsEstimation)));
     }
 
 }

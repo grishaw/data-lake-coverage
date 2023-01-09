@@ -5,10 +5,10 @@ import java.util.List;
 
 public class Plan {
 
-    final long N = 5999989709L;
+    //final long N = 5999989709L;
 
     // for local test
-    //final long N = 6001215L;
+    final long N = 6001215L;
 
     // number of files in the data lake
     final long F = 10000;
@@ -51,6 +51,7 @@ public class Plan {
         return "Plan{" +
                 "clauses=" + clauses.size() +
                 ", cost=" + cost +
+                ", coverage size =" + (getTotalCost() - cost) +
                 ", total cost =" + getTotalCost() +
                 '}';
     }
