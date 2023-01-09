@@ -5,28 +5,28 @@ This is a proof-of-concept implementation of the ideas presented in the "Optimiz
 
 ## To perform the benchmark
  
-### Create TPC-H lineitem table
+### Create a TPC-H lineitem table
 
-1. Download `tpc-h_tools_v3.0.1.zip` file from the official tpc site - https://www.tpc.org/
-2. Unzip it to get `tpch` folder
-3. Inside `tpch/dbgen` folder create a makefile based on template `tpch/dbgen/makefile.suite`
-4. Run the following command to create `lineitem` table comprised of 10k files with a scale factor of 1TB
+1. Download the `tpc-h_tools_v3.0.1.zip` file from the official TPC site - https://www.tpc.org/
+2. Unzip it to get the `tpch` folder
+3. Inside the `tpch/dbgen` folder create a makefile based on the template `tpch/dbgen/makefile.suite`
+4. Run the following command to create a `lineitem` table comprised of 10k files with a scale factor of 1TB
    1. <code> for i in `seq 1 10000`; do echo $i; ./dbgen -s 1000 -S $i -C 10000 -T L -v; done; </code>
-5. Copy lineitem files to the cloud storage bucket. For example to copy to AWS S3, run
+5. Copy lineitem files to the cloud storage bucket. For example, to copy to AWS S3, run
    1. `aws s3 sync . s3://your-benchmark-bucket/tpch/lineitem`
 
 ### Build the project
 1. Clone this repo (`git clone https://github.com/grishaw/data-lake-coverage.git`)
 2. Build the project without running unit tests - `mvn clean package -DskipTests`
-3. To build the project with running the test 
-   1. `lineitem` table with scale factor 1GB should be placed in `src/test/resources/tables` folder
+3. To build the project and run the tests 
+   1. `lineitem` table with scale factor 1GB should be placed in the `src/test/resources/tables` folder
    2. `mvn clean package`
-4. After the build `target/data-lake-coverage-1.0-SNAPSHOT.jar` file is created (we call it the "jar" below)
+4. After the build, `target/data-lake-coverage-1.0-SNAPSHOT.jar` file is created
 5. Copy the jar to the cloud storage
 
 ### Create column indexes and the root index 
 1. We create indexes by a Spark application running in the cloud (e.g., via AWS EMR). The following command should be executed on the Spark cluster:
-   1. <code> spark-submit --deploy-mode cluster --class index.Index --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "l_shipdate,l_extendedprice,l_commitdate" "max-records-per-index-file" "index-row-group-size-in-MB" "number-of-index-files-per-column" </code>
+   1. <code> spark-submit --deploy-mode cluster --class index.Index --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "comma separated column names to index" "max-records-per-index-file" "index-row-group-size-in-MB" "number-of-index-files-per-column" </code>
 3. For example our command was:
    1. <code>spark-submit --deploy-mode cluster --class index.Index --deploy-mode cluster s3://data-lake-coverage/app/data-lake-coverage.jar s3://data-lake-coverage/tpch/lineitem s3://data-lake-coverage/index/lineitem l_shipdate,l_extendedprice,l_commitdate 20000000 128 1000</code>
 
