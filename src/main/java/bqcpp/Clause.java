@@ -18,9 +18,9 @@ public class Clause {
 
     String columnName;
 
-    String columnValue1;
+    public String columnValue1;
 
-    String columnValue2;
+    public String columnValue2;
 
     public Clause(ClauseType type, String columnName, String columnValue1, String columnValue2) {
         this.type = type;

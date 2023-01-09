@@ -1,5 +1,6 @@
 package tpch;
 
+import bqcpp.Clause;
 import index.Index;
 import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.apache.spark.sql.Column;
@@ -13,12 +14,98 @@ import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
+import static bqcpp.ClauseType.LESS_OR_EQUAL_THAN;
+import static bqcpp.ClauseType.RANGE;
 import static org.apache.spark.sql.functions.*;
 import static testutils.MyUtils.initTestSparkSession;
 
 public class BenchmarkTest {
 
-    @Ignore
+    List<Clause> q1 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "969", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-06", "1994-01-10"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-05")
+    );
+
+    List<Clause> q2 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "972", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-10", "1994-01-20"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-09")
+    );
+
+    List<Clause> q3 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "980", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-16", "1994-01-26"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-15")
+    );
+
+    List<Clause> q4 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1001", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-20", "1994-01-30"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-19")
+    );
+
+    List<Clause> q5 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1030", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-24", "1994-02-01"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-23")
+    );
+
+    List<Clause> q6 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1050", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-26", "1994-02-03"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-25")
+    );
+
+    List<Clause> q7 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1079", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-31", "1994-02-06"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-30")
+    );
+
+    List<Clause> q8 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1092", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-31", "1994-02-07"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-30")
+    );
+
+    List<Clause> q9 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1098", null),
+            new Clause(RANGE, "l_shipdate", "1994-01-31", "1994-02-09"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-30")
+    );
+
+    List<Clause> q10 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1105", null),
+            new Clause(RANGE, "l_shipdate", "1994-02-01", "1994-02-12"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-31")
+    );
+
+    List<Clause> q11 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1115", null),
+            new Clause(RANGE, "l_shipdate", "1994-02-01", "1994-02-16"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-31")
+    );
+
+    List<Clause> q12 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1122", null),
+            new Clause(RANGE, "l_shipdate", "1994-02-01", "1994-02-20"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-31")
+    );
+
+    List<Clause> q13 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "1137", null),
+            new Clause(RANGE, "l_shipdate", "1994-02-01", "1994-03-01"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-31")
+    );
+
+    List<Clause> q14 = Arrays.asList(
+            new Clause(LESS_OR_EQUAL_THAN, "l_extendedprice", "2000", null),
+            new Clause(RANGE, "l_shipdate", "1994-02-01", "1994-03-30"),
+            new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-31")
+    );
+
+    @Test
     public void benchmarkTest(){
 
         SparkSession sparkSession = initTestSparkSession("benchmarkTest");
@@ -26,7 +113,7 @@ public class BenchmarkTest {
         String tablePath = "/Users/grishaw/dev/other/tpch/dbgen/lineitem1/";
         String indexPath = "/Users/grishaw/dev/other/tpch/dbgen/index/v10/lineitem1/";
 
-        String [][] queries = {Benchmark.queryInput6, Benchmark.queryInput12, Benchmark.queryInput14};
+        List<Clause>[] queries = new List[]{q6, q12, q14};
 
         // TODO check different subsets
 
@@ -34,13 +121,14 @@ public class BenchmarkTest {
 
         Dataset rootIndex = sparkSession.read().json(indexPath + "/" + Index.rootIndexSuffix).cache();
 
-        for (String[] queryInput : queries) {
+        int j=1;
+        for (List<Clause> q: queries) {
 
             int timeNoIndex=0, timeWithIndex=0;
             int numOfRetries = 2;
             int numOfFiles = 0, numOfIndexFiles=0;
 
-            long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(sparkSession, tablePath), queryInput);
+            long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(sparkSession, tablePath), q);
 
             for (int i=0; i<numOfRetries; i++) {
 
@@ -49,7 +137,7 @@ public class BenchmarkTest {
 
                 Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
 
-                double result1 = runBenchmarkQuery(lineItem, queryInput);
+                double result1 = runBenchmarkQuery(lineItem, q);
 
                 long end = System.currentTimeMillis();
 
@@ -57,25 +145,25 @@ public class BenchmarkTest {
                 long start2 = System.currentTimeMillis();
 
                 List<String> indexFileNamesExtendedPrice = rootIndex
-                        .where(col("col").equalTo("l_extendedprice").and(col("min").leq(lit(Integer.valueOf(queryInput[1])))))
+                        .where(col("col").equalTo("l_extendedprice").and(col("min").leq(lit(Integer.valueOf(q.get(0).columnValue1)))))
                         .select("file").distinct().as(Encoders.STRING()).collectAsList();
                 System.out.println("index files extendedPrice - " + indexFileNamesExtendedPrice);
                 Dataset indexExtendedPrice = sparkSession.read().parquet(indexFileNamesExtendedPrice.toArray(new String[0]))
-                        .where(col("l_extendedprice").leq(lit(Integer.parseInt(queryInput[1]))));
+                        .where(col("l_extendedprice").leq(lit(Integer.parseInt(q.get(0).columnValue1))));
 
                 List<String> indexFileNamesShipDate = rootIndex
-                        .where(col("col").equalTo("l_shipdate").and(not(col("max").lt(lit(queryInput[2])).or(col("min").gt(lit(queryInput[3]))))))
+                        .where(col("col").equalTo("l_shipdate").and(not(col("max").lt(lit(q.get(1).columnValue1)).or(col("min").gt(lit(q.get(1).columnValue2))))))
                         .select("file").distinct().as(Encoders.STRING()).collectAsList();
                 System.out.println("index files l_shipdate - " + indexFileNamesShipDate);
                 Dataset indexShipDate = sparkSession.read().parquet(indexFileNamesShipDate.toArray(new String[0]))
-                        .where(col("l_shipdate").geq(queryInput[2]).and(col("l_shipdate").leq(queryInput[3])));
+                        .where(col("l_shipdate").geq(q.get(1).columnValue1).and(col("l_shipdate").leq(q.get(1).columnValue2)));
 
                 List<String> indexFileNamesCommitDate = rootIndex
-                        .where(col("col").equalTo("l_commitdate").and(not(col("max").lt(lit(queryInput[4])).or(col("min").gt(lit(queryInput[5]))))))
+                        .where(col("col").equalTo("l_commitdate").and(not(col("max").lt(lit(q.get(2).columnValue1)).or(col("min").gt(lit(q.get(2).columnValue2))))))
                         .select("file").distinct().as(Encoders.STRING()).collectAsList();
                 System.out.println("index files l_commitdate - " + indexFileNamesCommitDate);
                 Dataset indexCommitDate = sparkSession.read().parquet(indexFileNamesCommitDate.toArray(new String[0]))
-                        .where(col("l_commitdate").geq(queryInput[4]).and(col("l_commitdate").leq(queryInput[5])));
+                        .where(col("l_commitdate").geq(q.get(2).columnValue1).and(col("l_commitdate").leq(q.get(2).columnValue2)));
 
                 Dataset joined = indexShipDate
                         .join(indexExtendedPrice, indexShipDate.col("file").equalTo(indexExtendedPrice.col("file"))
@@ -87,7 +175,7 @@ public class BenchmarkTest {
                 List<String> fileNames = (List<String>) joined.select("file").distinct().as(Encoders.STRING()).collectAsList();
 
                 Dataset lineItemViaIndex = TablesReader.readLineItem(sparkSession, fileNames.toArray(new String[0]));
-                double result2 = runBenchmarkQuery(lineItemViaIndex, queryInput);
+                double result2 = runBenchmarkQuery(lineItemViaIndex, q);
 
                 long end2 = System.currentTimeMillis();
 
@@ -100,12 +188,12 @@ public class BenchmarkTest {
                 numOfIndexFiles += (indexFileNamesExtendedPrice.size() + indexFileNamesShipDate.size() + indexFileNamesCommitDate.size());
             }
 
-            result.add(Arrays.asList(queryInput[0],
-                    String.valueOf(Math.floor(1.0 * timeNoIndex / numOfRetries)),
-                    String.valueOf(Math.floor(1.0 * timeWithIndex / numOfRetries)),
-                    String.valueOf(numOfFiles / numOfRetries),
-                    String.valueOf(numOfIndexFiles / numOfRetries),
-                    String.valueOf(tightCoverageSize)
+            result.add(Arrays.asList("query-" + j++,
+                            String.valueOf(Math.floor(1.0 * timeNoIndex / numOfRetries)),
+                            String.valueOf(Math.floor(1.0 * timeWithIndex / numOfRetries)),
+                            String.valueOf(numOfFiles / numOfRetries),
+                            String.valueOf(numOfIndexFiles / numOfRetries),
+                            String.valueOf(tightCoverageSize)
                     )
             );
 
@@ -126,24 +214,24 @@ public class BenchmarkTest {
 
     }
 
-    private static long getTightCoverageSize(Dataset df, String[] queryInput){
+    private static long getTightCoverageSize(Dataset df, List<Clause> q){
         return df
-                .where(getQuery6Condition(queryInput))
+                .where(getQuery6Condition(q))
                 .select(input_file_name()).distinct().count();
     }
 
-    private static double runBenchmarkQuery(Dataset df, String[] queryInput){
+    private static double runBenchmarkQuery(Dataset df, List<Clause> q){
         return df
-                .where(getQuery6Condition(queryInput))
+                .where(getQuery6Condition(q))
                 .groupBy()
                 .agg(sum(col("l_extendedprice").multiply(col("l_discount"))))
                 .as(Encoders.DOUBLE()).collectAsList().get(0);
     }
 
-    private static Column getQuery6Condition(String[] q){
-        return col("l_extendedprice").leq(lit(Integer.parseInt(q[1])))
-                .and(col("l_shipdate").geq(q[2])).and(col("l_shipdate").leq(q[3]))
-                .and(col("l_commitdate").geq(q[4])).and(col("l_commitdate").leq(q[5]))
+    private static Column getQuery6Condition(List<Clause> q){
+        return col("l_extendedprice").leq(lit(Integer.parseInt(q.get(0).columnValue1)))
+                .and(col("l_shipdate").geq(q.get(1).columnValue1)).and(col("l_shipdate").leq(q.get(1).columnValue2))
+                .and(col("l_commitdate").geq(q.get(2).columnValue1)).and(col("l_commitdate").leq(q.get(2).columnValue2))
                 .and(col("l_discount").geq(0.02)).and(col("l_discount").leq( 0.09))
                 .and(col("l_quantity").lt(35));
     }
