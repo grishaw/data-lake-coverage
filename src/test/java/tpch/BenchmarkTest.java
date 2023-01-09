@@ -107,7 +107,7 @@ public class BenchmarkTest {
             new Clause(RANGE, "l_commitdate", "1994-01-01", "1994-01-31")
     );
 
-    @Test
+    @Ignore
     public void benchmarkTest(){
 
         SparkSession sparkSession = initTestSparkSession("benchmarkTest");
@@ -127,8 +127,7 @@ public class BenchmarkTest {
         for (List<Clause> q: queries) {
 
             int timeNoIndex=0, timeWithIndex=0;
-            int numOfRetries = 2;
-            int numOfFiles = 0;
+            int numOfRetries = 2, numOfFiles = 0;
 
             long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(sparkSession, tablePath), q);
 

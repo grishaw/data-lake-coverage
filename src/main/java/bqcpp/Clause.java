@@ -1,12 +1,9 @@
 package bqcpp;
 
+import static bqcpp.BqcppSolver.F;
+import static bqcpp.BqcppSolver.FACTOR;
+
 public class Clause {
-
-    // number of files in the data lake
-    final long F = 10000;
-
-    // (F -1) / F
-    final double factor = 0.9999;
 
     // number of index files read from the storage
     long cost;
@@ -43,7 +40,7 @@ public class Clause {
 
     public long getTotalCost(){
 
-        long filesEstimation = (long) (F * (1 - Math.pow(factor, result)));
+        long filesEstimation = (long) (F * (1 - Math.pow(FACTOR, result)));
 
         return filesEstimation + cost;
     }

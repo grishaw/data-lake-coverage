@@ -14,6 +14,16 @@ import static org.apache.spark.sql.functions.col;
 
 public class BqcppSolver {
 
+    // number of files in the data lake
+    public static final long F = 10000;
+
+    // (F -1) / F
+    public static final double FACTOR = 0.9999;
+
+    //final long N = 5999989709L; // for cloud tests
+
+    public static final long N = 6001215L; // for local test
+
     public static void assignEstimations(Collection<Clause> clauses, Dataset rootIndex){
 
         for (Clause c : clauses){

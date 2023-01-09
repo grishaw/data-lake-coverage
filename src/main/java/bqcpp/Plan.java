@@ -9,21 +9,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static bqcpp.BqcppSolver.*;
 import static org.apache.spark.sql.functions.*;
 import static org.apache.spark.sql.functions.col;
 
 public class Plan {
-
-    //final long N = 5999989709L;
-
-    // for local test
-    final long N = 6001215L;
-
-    // number of files in the data lake
-    final long F = 10000;
-
-    // (F -1) / F
-    final double factor = 0.9999;
 
     public List<Clause> clauses = new ArrayList<>();
 
@@ -37,7 +27,7 @@ public class Plan {
             result = (long) (result * ((clauses.get(i).result * 1.0) / N));
         }
 
-        long filesEstimation = (long) (F * (1 - Math.pow(factor, result)));
+        long filesEstimation = (long) (F * (1 - Math.pow(FACTOR, result)));
 
         return filesEstimation  + cost;
     }
@@ -45,6 +35,8 @@ public class Plan {
     public long getCoverageSize(){
         return getTotalCost() - cost;
     }
+
+    // what would be the cost after adding given clause c to this clauses
     public long getExpectedTotalCost(Clause c){
         List<Clause> myClauses = new ArrayList<>(clauses);
         myClauses.add(c);
@@ -54,7 +46,7 @@ public class Plan {
             result = (long) (result * ((myClauses.get(i).result * 1.0) / N));
         }
 
-        long filesEstimation = (long) (F * (1 - Math.pow(factor, result)));
+        long filesEstimation = (long) (F * (1 - Math.pow(FACTOR, result)));
 
         return filesEstimation  + cost;
     }
