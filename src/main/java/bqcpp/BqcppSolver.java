@@ -15,15 +15,18 @@ import static org.apache.spark.sql.functions.col;
 public class BqcppSolver {
 
     // number of files in the data lake
-    public static final long F = 10000;
+    public static final long F = 10_000;
 
-    // (F -1) / F
-    public static final double FACTOR = 0.9999;
+    // number of records in the data lake
+    public static final long N = 5_999_989_709L; // for cloud tests
 
-    //final long N = 5999989709L; // for cloud tests
+    // number of records in the data lake
+    //public static final long N = 6_001_215L; // for local test
 
-    public static final long N = 6001215L; // for local test
+    // used in files estimation
+    public static final double FACTOR = (F - 1) / (F * 1.0);
 
+    // for each clause assign estimated cost (number of indexes to read from the storage) and estimated result (number of records) based on root-index statistics
     public static void assignEstimations(Collection<Clause> clauses, Dataset rootIndex){
 
         for (Clause c : clauses){
@@ -73,6 +76,8 @@ public class BqcppSolver {
 
     }
 
+    // greedy algorithm to compute a balanced plan - we sort the clauses by the total cost and add clauses from the bottom until the total cost keep reducing
+    // in our case (when result is estimated by the number of records) - this algorithm returns the optimal solution
     public static Plan getBalancedPlanByGreedyAlgorithm(Collection<Clause> clauses){
 
         Plan result = new Plan();

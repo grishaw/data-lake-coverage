@@ -20,6 +20,7 @@ public class Plan {
     public long cost;
 
 
+    // estimation of the number of files and indexes that has to be read from the cloud for this plan
     public long getTotalCost(){
 
         long result = clauses.get(0).result;

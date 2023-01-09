@@ -26,6 +26,13 @@ public class Clause {
         this.columnValue2 = columnValue2;
     }
 
+    public long getTotalCost(){
+
+        long filesEstimation = (long) (F * (1 - Math.pow(FACTOR, result)));
+
+        return filesEstimation + cost;
+    }
+
     @Override
     public String toString() {
         return "Clause{" +
@@ -36,12 +43,5 @@ public class Clause {
                 ", columnValue1='" + columnValue1 + '\'' +
                 ", columnValue2='" + columnValue2 + '\'' +
                 '}';
-    }
-
-    public long getTotalCost(){
-
-        long filesEstimation = (long) (F * (1 - Math.pow(FACTOR, result)));
-
-        return filesEstimation + cost;
     }
 }
