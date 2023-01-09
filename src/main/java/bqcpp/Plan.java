@@ -51,6 +51,7 @@ public class Plan {
         return filesEstimation  + cost;
     }
 
+    // now assumes we benchmark query 6 only
     public List<String> getCoverage(SparkSession spark, Dataset rootIndex){
 
         Map <String, Clause> clausesMap = asMap();
@@ -65,14 +66,12 @@ public class Plan {
         List<java.lang.String> indexFileNamesShipDate = rootIndex
                 .where(col("col").equalTo("l_shipdate").and(not(col("max").lt(lit(clausesMap.get("l_shipdate").columnValue1)).or(col("min").gt(lit(clausesMap.get("l_shipdate").columnValue2))))))
                 .select("file").distinct().as(Encoders.STRING()).collectAsList();
-        System.out.println("index files l_shipdate - " + indexFileNamesShipDate);
         Dataset indexShipDate = spark.read().parquet(indexFileNamesShipDate.toArray(new java.lang.String[0]))
                 .where(col("l_shipdate").geq(clausesMap.get("l_shipdate").columnValue1).and(col("l_shipdate").leq(clausesMap.get("l_shipdate").columnValue2)));
 
         List<java.lang.String> indexFileNamesCommitDate = rootIndex
                 .where(col("col").equalTo("l_commitdate").and(not(col("max").lt(lit(clausesMap.get("l_commitdate").columnValue1)).or(col("min").gt(lit(clausesMap.get("l_commitdate").columnValue2))))))
                 .select("file").distinct().as(Encoders.STRING()).collectAsList();
-        System.out.println("index files l_commitdate - " + indexFileNamesCommitDate);
         Dataset indexCommitDate = spark.read().parquet(indexFileNamesCommitDate.toArray(new java.lang.String[0]))
                 .where(col("l_commitdate").geq(clausesMap.get("l_commitdate").columnValue1).and(col("l_commitdate").leq(clausesMap.get("l_commitdate").columnValue2)));
 
