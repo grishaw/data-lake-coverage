@@ -1,6 +1,8 @@
 package tpch;
 
+import bqcpp.BqcppSolver;
 import bqcpp.Clause;
+import bqcpp.Plan;
 import index.Index;
 import jdk.nashorn.internal.ir.annotations.Ignore;
 import org.apache.spark.sql.Column;
@@ -126,9 +128,13 @@ public class BenchmarkTest {
 
             int timeNoIndex=0, timeWithIndex=0;
             int numOfRetries = 2;
-            int numOfFiles = 0, numOfIndexFiles=0;
+            int numOfFiles = 0;
 
             long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(sparkSession, tablePath), q);
+
+            BqcppSolver.assignEstimations(q, rootIndex);
+
+            Plan p = BqcppSolver.getBalancedPlanByGreedyAlgorithm(q);
 
             for (int i=0; i<numOfRetries; i++) {
 
@@ -136,7 +142,6 @@ public class BenchmarkTest {
                 long start = System.currentTimeMillis();
 
                 Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
-
                 double result1 = runBenchmarkQuery(lineItem, q);
 
                 long end = System.currentTimeMillis();
@@ -144,36 +149,7 @@ public class BenchmarkTest {
                 // test with index
                 long start2 = System.currentTimeMillis();
 
-                List<String> indexFileNamesExtendedPrice = rootIndex
-                        .where(col("col").equalTo("l_extendedprice").and(col("min").leq(lit(Integer.valueOf(q.get(0).columnValue1)))))
-                        .select("file").distinct().as(Encoders.STRING()).collectAsList();
-                System.out.println("index files extendedPrice - " + indexFileNamesExtendedPrice);
-                Dataset indexExtendedPrice = sparkSession.read().parquet(indexFileNamesExtendedPrice.toArray(new String[0]))
-                        .where(col("l_extendedprice").leq(lit(Integer.parseInt(q.get(0).columnValue1))));
-
-                List<String> indexFileNamesShipDate = rootIndex
-                        .where(col("col").equalTo("l_shipdate").and(not(col("max").lt(lit(q.get(1).columnValue1)).or(col("min").gt(lit(q.get(1).columnValue2))))))
-                        .select("file").distinct().as(Encoders.STRING()).collectAsList();
-                System.out.println("index files l_shipdate - " + indexFileNamesShipDate);
-                Dataset indexShipDate = sparkSession.read().parquet(indexFileNamesShipDate.toArray(new String[0]))
-                        .where(col("l_shipdate").geq(q.get(1).columnValue1).and(col("l_shipdate").leq(q.get(1).columnValue2)));
-
-                List<String> indexFileNamesCommitDate = rootIndex
-                        .where(col("col").equalTo("l_commitdate").and(not(col("max").lt(lit(q.get(2).columnValue1)).or(col("min").gt(lit(q.get(2).columnValue2))))))
-                        .select("file").distinct().as(Encoders.STRING()).collectAsList();
-                System.out.println("index files l_commitdate - " + indexFileNamesCommitDate);
-                Dataset indexCommitDate = sparkSession.read().parquet(indexFileNamesCommitDate.toArray(new String[0]))
-                        .where(col("l_commitdate").geq(q.get(2).columnValue1).and(col("l_commitdate").leq(q.get(2).columnValue2)));
-
-                Dataset joined = indexShipDate
-                        .join(indexExtendedPrice, indexShipDate.col("file").equalTo(indexExtendedPrice.col("file"))
-                                .and(indexShipDate.col("id").equalTo(indexExtendedPrice.col("id"))))
-                        .join(indexCommitDate, indexShipDate.col("file").equalTo(indexCommitDate.col("file"))
-                                .and(indexShipDate.col("id").equalTo(indexCommitDate.col("id"))))
-                        .select(indexShipDate.col("file"), indexCommitDate.col("id"));
-
-                List<String> fileNames = (List<String>) joined.select("file").distinct().as(Encoders.STRING()).collectAsList();
-
+                List<String> fileNames = p.getCoverage(sparkSession, rootIndex);
                 Dataset lineItemViaIndex = TablesReader.readLineItem(sparkSession, fileNames.toArray(new String[0]));
                 double result2 = runBenchmarkQuery(lineItemViaIndex, q);
 
@@ -185,15 +161,16 @@ public class BenchmarkTest {
                 timeWithIndex += (end2 - start2) / 1000;
 
                 numOfFiles += fileNames.size();
-                numOfIndexFiles += (indexFileNamesExtendedPrice.size() + indexFileNamesShipDate.size() + indexFileNamesCommitDate.size());
             }
 
             result.add(Arrays.asList("query-" + j++,
                             String.valueOf(Math.floor(1.0 * timeNoIndex / numOfRetries)),
                             String.valueOf(Math.floor(1.0 * timeWithIndex / numOfRetries)),
+                            String.valueOf(p.getCoverageSize()),
                             String.valueOf(numOfFiles / numOfRetries),
-                            String.valueOf(numOfIndexFiles / numOfRetries),
-                            String.valueOf(tightCoverageSize)
+                            String.valueOf(tightCoverageSize),
+                            String.valueOf(p.cost),
+                            String.valueOf(p.clauses.size())
                     )
             );
 
@@ -206,9 +183,12 @@ public class BenchmarkTest {
             System.out.println("no index took : " + list.get(1) + " seconds");
             System.out.println("with index took : " + list.get(2) + " seconds");
             System.out.println("--------------------------------------------");
-            System.out.println("num of coverage files : " + list.get(3));
-            System.out.println("num of index files  : " + list.get(4));
+            System.out.println("num of estimated coverage files : " + list.get(3));
+            System.out.println("num of actual coverage files : " + list.get(4));
+            System.out.println("--------------------------------------------");
             System.out.println("num of tight coverage files : " + list.get(5));
+            System.out.println("num of index files  : " + list.get(6));
+            System.out.println("num of clauses  : " + list.get(7));
             System.out.println("*********************************************");
         }
 
