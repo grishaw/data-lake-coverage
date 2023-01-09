@@ -128,7 +128,7 @@ public class BenchmarkNew {
         for (List<Clause> q: queries) {
 
             int timeNoIndex=0, timeWithIndex=0;
-            int numOfRetries = 2, numOfFiles = 0;
+            int numOfRetries = 3, numOfFiles = 0;
 
             long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(spark, tablePath), q);
 
