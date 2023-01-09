@@ -25,6 +25,8 @@ public class BenchmarkTest {
     @Ignore
     public void benchmarkTest(){
 
+        // for local test set BqcppSolver.N = 6_001_215
+
         SparkSession sparkSession = initTestSparkSession("benchmarkTest");
 
         String tablePath = "/Users/grishaw/dev/other/tpch/dbgen/lineitem1/";

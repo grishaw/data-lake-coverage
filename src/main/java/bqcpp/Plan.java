@@ -55,6 +55,8 @@ public class Plan {
     // now assumes we benchmark query 6 only
     public List<String> getCoverage(SparkSession spark, Dataset rootIndex){
 
+        //TODO make generic
+
         Map <String, Clause> clausesMap = asMap();
 
         List<String> indexFileNamesExtendedPrice = rootIndex

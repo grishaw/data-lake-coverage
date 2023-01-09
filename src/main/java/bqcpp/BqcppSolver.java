@@ -18,10 +18,7 @@ public class BqcppSolver {
     public static final long F = 10_000;
 
     // number of records in the data lake
-    public static final long N = 5_999_989_709L; // for cloud tests
-
-    // number of records in the data lake
-    //public static final long N = 6_001_215L; // for local test
+    public static final long N = 5_999_989_709L;
 
     // used in files estimation
     public static final double FACTOR = (F - 1) / (F * 1.0);
@@ -77,7 +74,7 @@ public class BqcppSolver {
     }
 
     // greedy algorithm to compute a balanced plan - we sort the clauses by the total cost and add clauses from the bottom until the total cost keep reducing
-    // in our case (when result is estimated by the number of records) - this algorithm returns the optimal solution
+    // in our case (when the result is estimated by the number of records) - this algorithm returns the optimal solution
     public static Plan getBalancedPlanByGreedyAlgorithm(Collection<Clause> clauses){
 
         Plan result = new Plan();
