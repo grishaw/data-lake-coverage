@@ -4,6 +4,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.sql.SparkSession;
+import tpch.TablesReader;
 
 
 public class MyUtils {
@@ -24,6 +25,13 @@ public class MyUtils {
         return SparkSession.builder()
                 .config(sparkConf)
                 .getOrCreate();
+    }
+
+    public static void main(String[] args) {
+        SparkSession spark = initTestSparkSession("test1");
+
+        // to convert csv file to parquet
+        TablesReader.writeLineItemAsParquet(spark, "src/test/resources/tables/lineitem.tbl", "src/test/resources/tables/parquet/");
     }
 
 }

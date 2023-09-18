@@ -47,4 +47,12 @@ public class TablesReader {
         return readLineItem(spark, new String[]{path});
     }
 
+    public static void writeLineItemAsParquet(SparkSession spark, String inputPath, String outputPath){
+        Dataset lineItem = readLineItem(spark, inputPath);
+        lineItem.write().parquet(outputPath);
+    }
+
+    public static Dataset readLineItemParquet(SparkSession spark, String path){
+        return spark.read().parquet(path);
+    }
 }

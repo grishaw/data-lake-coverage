@@ -23,4 +23,17 @@ public class TablesReaderTest {
 
         Assertions.assertEquals(123141078.23, query6ExpectedResult, 0.1);
     }
+
+    @Test
+    public void query6ValidationParquet(){
+        SparkSession sparkSession = initTestSparkSession("query6ValidationParquet");
+
+        Dataset lineItem = TablesReader.readLineItemParquet(sparkSession, "src/test/resources/tables/parquet/lineitem/");
+
+        double query6ExpectedResult = (double) lineItem
+                .where("l_shipdate >= '1994-01-01' and l_shipdate < '1995-01-01' and l_discount >= 0.05 and l_discount <= 0.07 and l_quantity < 24")
+                .agg(sum(col("l_extendedprice").multiply(col("l_discount")))).as(Encoders.DOUBLE()).collectAsList().get(0);
+
+        Assertions.assertEquals(123141078.23, query6ExpectedResult, 0.1);
+    }
 }

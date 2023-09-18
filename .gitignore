@@ -4,3 +4,4 @@ target
 logs/
 *.tbl
 .DS_Store
+tables/
