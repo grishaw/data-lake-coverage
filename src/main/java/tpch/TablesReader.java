@@ -101,4 +101,18 @@ public class TablesReader {
         Dataset lineItem = readLineItem(spark, inputPath);
         lineItem.writeTo("local.lineitem").create();
     }
+
+    public static void main(String[] args) {
+        String inputPath = args[0];
+        String outputPath = args[1];
+        String outputFormat = args[2].trim().toLowerCase();
+
+        SparkSession spark = SparkSession.builder().appName("main").getOrCreate();
+
+        if (outputFormat.equals("parquet")){
+            TablesReader.writeLineItemAsParquet(spark, inputPath, outputPath);
+        }else if (outputFormat.equals("iceberg")){
+            TablesReader.writeLineItemAsIceberg(spark, inputPath);
+        }
+    }
 }
