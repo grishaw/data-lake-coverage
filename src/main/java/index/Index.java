@@ -21,10 +21,11 @@ public class Index {
         int maxRecordsPerFile = Integer.parseInt(args[3]);
         int chunkSizeInMB = Integer.parseInt(args[4]);
         int numOfFiles = Integer.parseInt(args[5]);
+        String tableFormat = args[6].trim().toLowerCase();
 
         SparkSession sparkSession = initSparkSession("createIndex");
 
-        Dataset lineItem = TablesReader.readLineItem(sparkSession, tablePath);
+        Dataset lineItem = TablesReader.readLineItemWithFormat(sparkSession, tablePath, tableFormat);
 
         Index.createLineItemIndex(lineItem, indexPath, columns, maxRecordsPerFile, chunkSizeInMB, numOfFiles);
 

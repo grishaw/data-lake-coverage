@@ -109,14 +109,15 @@ public class Benchmark {
 
         String tablePath = args[0];
         String indexPath = args[1];
+        String tableFormat = args[2].trim().toLowerCase();;
 
         SparkSession sparkSession = initSparkSession("benchmark");
 
-        runBenchmark(sparkSession, tablePath, indexPath);
+        runBenchmark(sparkSession, tablePath, indexPath, tableFormat);
     }
 
 
-    public static void runBenchmark(SparkSession spark, String tablePath, String indexPath){
+    public static void runBenchmark(SparkSession spark, String tablePath, String indexPath, String tableFormat){
 
         List<Clause>[] queries = new List[]{q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14};
 
@@ -130,7 +131,7 @@ public class Benchmark {
             int timeNoIndex=0, timeWithIndex=0;
             int numOfRetries = 3, numOfFiles = 0;
 
-            long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItem(spark, tablePath), q);
+            long tightCoverageSize = getTightCoverageSize(TablesReader.readLineItemWithFormat(spark, tablePath, tableFormat), q);
 
             BqcppSolver.assignEstimations(q, rootIndex);
 
@@ -141,7 +142,7 @@ public class Benchmark {
                 // test - no index
                 long start = System.currentTimeMillis();
 
-                Dataset lineItem = TablesReader.readLineItem(spark, tablePath);
+                Dataset lineItem = TablesReader.readLineItemWithFormat(spark, tablePath, tableFormat);
                 double result1 = runBenchmarkQuery(lineItem, q);
 
                 long end = System.currentTimeMillis();
@@ -150,7 +151,7 @@ public class Benchmark {
                 long start2 = System.currentTimeMillis();
 
                 List<String> fileNames = p.getCoverage(spark, rootIndex);
-                Dataset lineItemViaIndex = TablesReader.readLineItem(spark, fileNames.toArray(new String[0]));
+                Dataset lineItemViaIndex = TablesReader.readLineItemWithFormat(spark, fileNames.toArray(new String[0]), tableFormat);
                 double result2 = runBenchmarkQuery(lineItemViaIndex, q);
 
                 long end2 = System.currentTimeMillis();

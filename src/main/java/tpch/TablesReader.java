@@ -53,6 +53,34 @@ public class TablesReader {
     }
 
     public static Dataset readLineItemParquet(SparkSession spark, String path){
+        return readLineItemParquet(spark, new String[]{path});
+    }
+
+    public static Dataset readLineItemParquet(SparkSession spark, String [] path) {
         return spark.read().parquet(path);
+    }
+
+    public static Dataset readLineItemWithFormat(SparkSession spark, String path, String tableFormat){
+        Dataset lineItem;
+        if (tableFormat.equals("csv")) {
+            lineItem = TablesReader.readLineItem(spark, path);
+        }else if (tableFormat.equals("parquet")){
+            lineItem = TablesReader.readLineItemParquet(spark, path);
+        }else{
+            throw new IllegalArgumentException("Invalid table format : " + tableFormat);
+        }
+        return lineItem;
+    }
+
+    public static Dataset readLineItemWithFormat(SparkSession spark, String[] path, String tableFormat){
+        Dataset lineItem;
+        if (tableFormat.equals("csv")) {
+            lineItem = TablesReader.readLineItem(spark, path);
+        }else if (tableFormat.equals("parquet")){
+            lineItem = TablesReader.readLineItemParquet(spark, path);
+        }else{
+            throw new IllegalArgumentException("Invalid table format : " + tableFormat);
+        }
+        return lineItem;
     }
 }
