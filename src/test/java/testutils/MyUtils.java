@@ -20,6 +20,10 @@ public class MyUtils {
                 .set("spark.sql.shuffle.partitions", "5")
                 .set("spark.default.parallelism", "5")
                 .set("spark.sql.autoBroadcastJoinThreshold", "-1")
+                .set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
+                .set("spark.sql.catalog.local", "org.apache.iceberg.spark.SparkCatalog")
+                .set("spark.sql.catalog.local.type", "hadoop")
+                .set("spark.sql.catalog.local.warehouse", "src/test/resources/tables/iceberg/");
                 ;
 
         return SparkSession.builder()
@@ -31,7 +35,10 @@ public class MyUtils {
         SparkSession spark = initTestSparkSession("test1");
 
         // to convert csv file to parquet
-        TablesReader.writeLineItemAsParquet(spark, "src/test/resources/tables/lineitem.tbl", "src/test/resources/tables/parquet/");
+        //TablesReader.writeLineItemAsParquet(spark, "src/test/resources/tables/lineitem.tbl", "src/test/resources/tables/parquet/");
+
+        // to convert csv file to iceberg
+        //TablesReader.writeLineItemAsIceberg(spark, "src/test/resources/tables/lineitem.tbl");
     }
 
 }

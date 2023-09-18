@@ -21,19 +21,20 @@ This is a proof-of-concept implementation of the ideas presented in the "Optimiz
 3. To build the project and run the tests 
    1. `lineitem` table with scale factor 1GB should be placed in the `src/test/resources/tables` folder
    2. parquet version of `lineitem` (previous step) should be placed in `src/test/resources/tables/parquet/lineitem/` (MyUtils.main can be used)
-   3. `mvn clean package`
+   3. iceberg version of `lineitem` (previous steps) should be placed in `src/test/resources/tables/iceberg/lineitem/` (MyUtils.main can be used)
+   4`mvn clean package`
 4. After the build, `target/data-lake-coverage-1.0-SNAPSHOT.jar` file is created
 5. Copy the jar to the cloud storage
 
 ### Create column indexes and the root index 
 1. We create indexes by a Spark application running in the cloud (e.g., via AWS EMR). The following command should be executed on the Spark cluster:
-   1. <code> spark-submit --deploy-mode cluster --class index.Index --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "comma separated column names to index" "max-records-per-index-file" "index-row-group-size-in-MB" "number-of-index-files-per-column" "table-format(csv or parquet)"</code>
+   1. <code> spark-submit --deploy-mode cluster --class index.Index --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "comma separated column names to index" "max-records-per-index-file" "index-row-group-size-in-MB" "number-of-index-files-per-column" "table-format(csv, parquet or iceberg)"</code>
 3. For example our command was:
    1. <code>spark-submit --deploy-mode cluster --class index.Index --deploy-mode cluster s3://data-lake-coverage/app/data-lake-coverage.jar s3://data-lake-coverage/tpch/lineitem s3://data-lake-coverage/index/lineitem l_shipdate,l_extendedprice,l_commitdate 20000000 128 1000 csv</code>
 
 ### Run query evaluation
 1. Should be run on a Spark cluster just like the previous step:
-   1. <code>spark-submit --deploy-mode cluster --class tpch.Benchmark --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "table-format(csv or parquet)"</code>
+   1. <code>spark-submit --deploy-mode cluster --class tpch.Benchmark --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "table-format(csv, parquet or iceberg)"</code>
 2. For example our command was:
    1. 1. <code>spark-submit --deploy-mode cluster --class tpch.Benchmark --deploy-mode cluster s3://data-lake-coverage/app/data-lake-coverage.jar s3://data-lake-coverage/tpch/lineitem s3://data-lake-coverage/index/lineitem/ csv</code>
 

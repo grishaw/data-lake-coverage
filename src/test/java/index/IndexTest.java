@@ -57,4 +57,28 @@ public class IndexTest {
         root.show(100, false);
 
     }
+
+    @Test
+    public void createLineItemIndexTestIceberg(){
+        SparkSession sparkSession = initTestSparkSession("createLineItemIndexTest");
+
+        Dataset lineItem = TablesReader.readLineItemIceberg(sparkSession);
+
+        String indexPath = "target/index" + System.currentTimeMillis();
+        Index.createLineItemIndex(lineItem, indexPath, new String[]{"l_shipdate", "l_discount", "l_quantity"}, 10_000_000, 100, 1);
+
+        Dataset shipDateIndex = sparkSession.read().parquet(indexPath + "/"+"l_shipdate");
+        shipDateIndex.show();
+
+        Dataset discountIndex = sparkSession.read().parquet(indexPath + "/"+"l_discount");
+        discountIndex.show();
+
+        Dataset quantityIndex = sparkSession.read().parquet(indexPath + "/"+"l_quantity");
+        quantityIndex.show();
+
+        Dataset root = sparkSession.read().json((indexPath + "/" + Index.rootIndexSuffix));
+
+        root.show(100, false);
+
+    }
 }

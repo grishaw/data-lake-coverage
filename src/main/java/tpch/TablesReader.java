@@ -1,5 +1,6 @@
 package tpch;
 
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
@@ -47,13 +48,12 @@ public class TablesReader {
         return readLineItem(spark, new String[]{path});
     }
 
-    public static void writeLineItemAsParquet(SparkSession spark, String inputPath, String outputPath){
-        Dataset lineItem = readLineItem(spark, inputPath);
-        lineItem.write().parquet(outputPath);
-    }
-
     public static Dataset readLineItemParquet(SparkSession spark, String path){
         return readLineItemParquet(spark, new String[]{path});
+    }
+
+    public static Dataset readLineItemIceberg(SparkSession spark){
+        return spark.read().format("iceberg").load("local.lineitem");
     }
 
     public static Dataset readLineItemParquet(SparkSession spark, String [] path) {
@@ -62,13 +62,17 @@ public class TablesReader {
 
     public static Dataset readLineItemWithFormat(SparkSession spark, String path, String tableFormat){
         Dataset lineItem;
+
         if (tableFormat.equals("csv")) {
             lineItem = TablesReader.readLineItem(spark, path);
         }else if (tableFormat.equals("parquet")){
             lineItem = TablesReader.readLineItemParquet(spark, path);
+        }else if (tableFormat.equals("iceberg")){
+            lineItem = TablesReader.readLineItemIceberg(spark);
         }else{
             throw new IllegalArgumentException("Invalid table format : " + tableFormat);
         }
+
         return lineItem;
     }
 
@@ -78,9 +82,23 @@ public class TablesReader {
             lineItem = TablesReader.readLineItem(spark, path);
         }else if (tableFormat.equals("parquet")){
             lineItem = TablesReader.readLineItemParquet(spark, path);
+        }else if (tableFormat.equals("iceberg")){
+            lineItem = TablesReader.readLineItemParquet(spark, path);
         }else{
             throw new IllegalArgumentException("Invalid table format : " + tableFormat);
         }
         return lineItem;
+    }
+
+
+    // for tests only
+    public static void writeLineItemAsParquet(SparkSession spark, String inputPath, String outputPath){
+        Dataset lineItem = readLineItem(spark, inputPath);
+        lineItem.write().parquet(outputPath);
+    }
+
+    public static void writeLineItemAsIceberg(SparkSession spark, String inputPath){
+        Dataset lineItem = readLineItem(spark, inputPath);
+        lineItem.writeTo("local.lineitem").create();
     }
 }
