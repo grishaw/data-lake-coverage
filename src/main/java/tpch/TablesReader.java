@@ -1,6 +1,5 @@
 package tpch;
 
-import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.DataTypes;
@@ -92,27 +91,46 @@ public class TablesReader {
 
 
     // for tests only
-    public static void writeLineItemAsParquet(SparkSession spark, String inputPath, String outputPath){
+    public static void writeLineItemAsParquet(SparkSession spark, String inputPath, String outputPath, int numOfFiles){
         Dataset lineItem = readLineItem(spark, inputPath);
+        if (numOfFiles > 0){
+            lineItem = lineItem.repartition(numOfFiles);
+        }
         lineItem.write().parquet(outputPath);
     }
 
-    public static void writeLineItemAsIceberg(SparkSession spark, String inputPath){
+    public static void writeLineItemAsIceberg(SparkSession spark, String inputPath, int numOfFiles){
         Dataset lineItem = readLineItem(spark, inputPath);
+        if (numOfFiles > 0){
+            lineItem = lineItem.repartition(numOfFiles);
+        }
         lineItem.writeTo("local.lineitem").create();
+    }
+
+    public static void writeLineItemAsCsv(SparkSession spark, String inputPath, String outputPath, int numOfFiles){
+        Dataset lineItem = spark.read().option("delimiter", "|").csv(inputPath);
+
+        if (numOfFiles > 0){
+            lineItem = lineItem.repartition(numOfFiles);
+        }
+
+        lineItem.write().option("delimiter", "|").csv(outputPath);
     }
 
     public static void main(String[] args) {
         String inputPath = args[0];
         String outputPath = args[1];
         String outputFormat = args[2].trim().toLowerCase();
+        int numberOfFiles = Integer.parseInt(args[3]);
 
         SparkSession spark = SparkSession.builder().appName("main").getOrCreate();
 
-        if (outputFormat.equals("parquet")){
-            TablesReader.writeLineItemAsParquet(spark, inputPath, outputPath);
-        }else if (outputFormat.equals("iceberg")){
-            TablesReader.writeLineItemAsIceberg(spark, inputPath);
+        if (outputFormat.equals("parquet")) {
+            TablesReader.writeLineItemAsParquet(spark, inputPath, outputPath, numberOfFiles);
+        } else if (outputFormat.equals("iceberg")) {
+            TablesReader.writeLineItemAsIceberg(spark, inputPath, numberOfFiles);
+        } else if (outputFormat.equals("csv")) {
+            TablesReader.writeLineItemAsCsv(spark, inputPath, outputPath, numberOfFiles);
         }
     }
 }

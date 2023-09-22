@@ -31,14 +31,4 @@ public class MyUtils {
                 .getOrCreate();
     }
 
-    public static void main(String[] args) {
-        SparkSession spark = initTestSparkSession("test1");
-
-        // to convert csv file to parquet
-        //TablesReader.writeLineItemAsParquet(spark, "src/test/resources/tables/lineitem.tbl", "src/test/resources/tables/parquet/");
-
-        // to convert csv file to iceberg
-        //TablesReader.writeLineItemAsIceberg(spark, "src/test/resources/tables/lineitem.tbl");
-    }
-
 }

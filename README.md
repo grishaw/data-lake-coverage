@@ -20,8 +20,8 @@ This is a proof-of-concept implementation of the ideas presented in the "Optimiz
 2. Build the project without running unit tests - `mvn clean package -DskipTests`
 3. To build the project and run the tests 
    1. `lineitem` table with scale factor 1GB should be placed in the `src/test/resources/tables` folder
-   2. parquet version of `lineitem` (previous step) should be placed in `src/test/resources/tables/parquet/lineitem/` (MyUtils.main can be used)
-   3. iceberg version of `lineitem` (previous steps) should be placed in `src/test/resources/tables/iceberg/lineitem/` (MyUtils.main can be used)
+   2. parquet version of `lineitem` (previous step) should be placed in `src/test/resources/tables/parquet/lineitem/`
+   3. iceberg version of `lineitem` (previous steps) should be placed in `src/test/resources/tables/iceberg/lineitem/`
    4`mvn clean package`
 4. After the build, `target/data-lake-coverage-1.0-SNAPSHOT.jar` file is created
 5. Copy the jar to the cloud storage
