@@ -23,7 +23,8 @@ public class MyUtils {
                 .set("spark.sql.extensions", "org.apache.iceberg.spark.extensions.IcebergSparkSessionExtensions")
                 .set("spark.sql.catalog.local", "org.apache.iceberg.spark.SparkCatalog")
                 .set("spark.sql.catalog.local.type", "hadoop")
-                .set("spark.sql.catalog.local.warehouse", "src/test/resources/tables/iceberg/");
+                .set("spark.sql.catalog.local.warehouse", "src/test/resources/tables/iceberg/")
+                .set("spark.sql.catalog.local.table-override.write.parquet.compression-codec", "snappy")
                 ;
 
         return SparkSession.builder()
