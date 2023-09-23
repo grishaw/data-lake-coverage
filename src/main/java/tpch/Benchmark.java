@@ -111,14 +111,15 @@ public class Benchmark {
         String indexPath = args[1];
         String tableFormat = args[2].trim().toLowerCase();
         BqcppSolver.F = Long.parseLong(args[3].trim());
+        int queryNum = Integer.parseInt(args[4].trim());
 
         SparkSession sparkSession = initSparkSession("benchmark");
 
-        runBenchmark(sparkSession, tablePath, indexPath, tableFormat);
+        runBenchmark(sparkSession, tablePath, indexPath, tableFormat, queryNum);
     }
 
 
-    public static void runBenchmark(SparkSession spark, String tablePath, String indexPath, String tableFormat){
+    public static void runBenchmark(SparkSession spark, String tablePath, String indexPath, String tableFormat, int queryNum){
 
         List<Clause>[] queries = new List[]{q1, q2, q3, q4, q5, q6, q7, q8, q9, q10, q11, q12, q13, q14};
 
@@ -144,7 +145,7 @@ public class Benchmark {
                 long start = System.currentTimeMillis();
 
                 Dataset lineItem = TablesReader.readLineItemWithFormat(spark, tablePath, tableFormat);
-                double result1 = runBenchmarkQuery(lineItem, q);
+                double result1 = runBenchmarkQuery(lineItem, q, queryNum);
 
                 long end = System.currentTimeMillis();
 
@@ -153,7 +154,7 @@ public class Benchmark {
 
                 List<String> fileNames = p.getCoverage(spark, rootIndex);
                 Dataset lineItemViaIndex = TablesReader.readLineItemWithFormat(spark, fileNames.toArray(new String[0]), tableFormat);
-                double result2 = runBenchmarkQuery(lineItemViaIndex, q);
+                double result2 = runBenchmarkQuery(lineItemViaIndex, q, queryNum);
 
                 long end2 = System.currentTimeMillis();
 
@@ -200,19 +201,31 @@ public class Benchmark {
 
     private static long getTightCoverageSize(Dataset df, List<Clause> q){
         return df
-                .where(getQuery6Condition(q))
+                .where(getQueryCondition(q))
                 .select(input_file_name()).distinct().count();
     }
 
-    private static double runBenchmarkQuery(Dataset df, List<Clause> q){
-        return df
-                .where(getQuery6Condition(q))
-                .groupBy()
-                .agg(sum(col("l_extendedprice").multiply(col("l_discount"))))
-                .as(Encoders.DOUBLE()).collectAsList().get(0);
+    private static double runBenchmarkQuery(Dataset df, List<Clause> q, int queryNum){
+        if (queryNum == 1){
+            return df
+                    .where(getQueryCondition(q))
+                    .groupBy("l_returnflag", "l_linestatus")
+                    .agg(sum("l_quantity"), sum("l_extendedprice"),
+                            avg("l_quantity"), avg("l_extendedprice"), avg("l_discount"),
+                            count("l_quantity").as("count_order"))
+                    .sort("l_returnflag", "l_linestatus")
+                    .where("l_returnflag = 'A' and l_linestatus = 'F'")
+                    .select("count_order").as(Encoders.DOUBLE()).collectAsList().get(0);
+        }else {
+            return df
+                    .where(getQueryCondition(q))
+                    .groupBy()
+                    .agg(sum(col("l_extendedprice").multiply(col("l_discount"))))
+                    .as(Encoders.DOUBLE()).collectAsList().get(0);
+        }
     }
 
-    private static Column getQuery6Condition(List<Clause> q){
+    private static Column getQueryCondition(List<Clause> q){
         return col("l_extendedprice").leq(lit(Integer.parseInt(q.get(0).columnValue1)))
                 .and(col("l_shipdate").geq(q.get(1).columnValue1)).and(col("l_shipdate").leq(q.get(1).columnValue2))
                 .and(col("l_commitdate").geq(q.get(2).columnValue1)).and(col("l_commitdate").leq(q.get(2).columnValue2))
