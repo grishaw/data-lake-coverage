@@ -109,7 +109,8 @@ public class Benchmark {
 
         String tablePath = args[0];
         String indexPath = args[1];
-        String tableFormat = args[2].trim().toLowerCase();;
+        String tableFormat = args[2].trim().toLowerCase();
+        BqcppSolver.F = Long.parseLong(args[3].trim());
 
         SparkSession sparkSession = initSparkSession("benchmark");
 

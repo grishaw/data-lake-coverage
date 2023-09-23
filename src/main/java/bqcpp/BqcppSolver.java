@@ -15,7 +15,7 @@ import static org.apache.spark.sql.functions.col;
 public class BqcppSolver {
 
     // number of files in the data lake
-    public static final long F = 10_000;
+    public static long F = 10_000;
 
     // number of records in the data lake
     public static final long N = 5_999_989_709L;
