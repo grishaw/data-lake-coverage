@@ -34,9 +34,9 @@ This is a proof-of-concept implementation of the ideas presented in the "Optimiz
 
 ### Run query evaluation
 1. Should be run on a Spark cluster just like the previous step:
-   1. <code>spark-submit --deploy-mode cluster --class tpch.Benchmark --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "table-format(csv, parquet or iceberg)"</code>
-2. For example our command was:
-   1. 1. <code>spark-submit --deploy-mode cluster --class tpch.Benchmark --deploy-mode cluster s3://data-lake-coverage/app/data-lake-coverage.jar s3://data-lake-coverage/tpch/lineitem s3://data-lake-coverage/index/lineitem/ csv</code>
+   1. <code>spark-submit --deploy-mode cluster --class tpch.Benchmark --deploy-mode cluster "path-to-jar" "path-to-lineitem-table" "path-to-index-folder" "table-format(csv, parquet or iceberg)" "number of files in the table" "query type (1 or 6)"</code>
+2. For example one of our commands was:
+   1. <code>spark-submit --deploy-mode cluster --class tpch.Benchmark --deploy-mode cluster s3://data-lake-coverage/app/data-lake-coverage.jar s3://data-lake-coverage/tpch/lineitem s3://data-lake-coverage/index/lineitem/ csv 10000 1</code>
 
 ### Benchmark output
 Output is written to the stdout of the driver. It should look as follows:
@@ -227,7 +227,24 @@ num of clauses  : 1
 
 ## Queries used in the benchmark
 
-### We used the following template query which is based on TPC-H Query 6.
+### We used the following two template queries which are based on TPC-H Query 1 and Query 6.
+
+
+Query 1
+
+<code>
+select 
+ sum("l_quantity"), sum("l_extendedprice"),
+ avg("l_quantity"), avg("l_extendedprice"), 
+avg("l_discount"), count("l_quantity") <br>
+&nbsp;from lineitem <br>
+&nbsp;where l_discount >= 0.02 and l_discount <= 0.09 and l_quantity < 35 and <br>
+&nbsp;l_extendedprice <= X1 and l_shipdate >= X2 and l_shipdate <= X3 and l_commitdate >= X4 and l_commitdate <= X5 <br>
+group by l_returnflag, l_linestatus
+order by l_returnflag, l_linestatus
+</code>
+
+Query 6
 
 <code>
 select sum(l_extendedprice*l_discount) <br>
@@ -235,7 +252,6 @@ select sum(l_extendedprice*l_discount) <br>
 &nbsp;where l_discount >= 0.02 and l_discount <= 0.09 and l_quantity < 35 and <br>
 &nbsp;l_extendedprice <= X1 and l_shipdate >= X2 and l_shipdate <= X3 and l_commitdate >= X4 and l_commitdate <= X5 <br>
 </code>
-
 
 
 ### For each query, X values were replaced with the values from the following table

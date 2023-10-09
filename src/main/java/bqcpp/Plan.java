@@ -53,7 +53,7 @@ public class Plan {
         return filesEstimation  + cost;
     }
 
-    // now assumes we benchmark query 6 only
+    // now assumes we benchmark TPC-H query 6 and 1 only
     public List<String> getCoverage(SparkSession spark, Dataset rootIndex){
 
         //TODO make generic
